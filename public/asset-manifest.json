@@ -1,0 +1,38 @@
+{
+  "files": {
+    "static/js/0.1d0e2d07.chunk.js": "/static/js/0.1d0e2d07.chunk.js",
+    "static/js/0.1d0e2d07.chunk.js.map": "/static/js/0.1d0e2d07.chunk.js.map",
+    "static/js/1.ca31a14e.chunk.js": "/static/js/1.ca31a14e.chunk.js",
+    "static/js/1.ca31a14e.chunk.js.map": "/static/js/1.ca31a14e.chunk.js.map",
+    "static/js/2.2b7d6686.chunk.js": "/static/js/2.2b7d6686.chunk.js",
+    "static/js/2.2b7d6686.chunk.js.map": "/static/js/2.2b7d6686.chunk.js.map",
+    "static/js/3.63804e23.chunk.js": "/static/js/3.63804e23.chunk.js",
+    "static/js/3.63804e23.chunk.js.map": "/static/js/3.63804e23.chunk.js.map",
+    "main.css": "/static/css/main.630a69b2.chunk.css",
+    "main.js": "/static/js/main.90bc14c2.chunk.js",
+    "main.js.map": "/static/js/main.90bc14c2.chunk.js.map",
+    "runtime-main.js": "/static/js/runtime-main.e57e82fa.js",
+    "runtime-main.js.map": "/static/js/runtime-main.e57e82fa.js.map",
+    "static/css/6.73d4c483.chunk.css": "/static/css/6.73d4c483.chunk.css",
+    "static/js/6.2c1cb247.chunk.js": "/static/js/6.2c1cb247.chunk.js",
+    "static/js/6.2c1cb247.chunk.js.map": "/static/js/6.2c1cb247.chunk.js.map",
+    "index.html": "/index.html",
+    "precache-manifest.a18417d67abb79c91bd72d9eac906a07.js": "/precache-manifest.a18417d67abb79c91bd72d9eac906a07.js",
+    "service-worker.js": "/service-worker.js",
+    "static/css/6.73d4c483.chunk.css.map": "/static/css/6.73d4c483.chunk.css.map",
+    "static/css/main.630a69b2.chunk.css.map": "/static/css/main.630a69b2.chunk.css.map",
+    "static/js/6.2c1cb247.chunk.js.LICENSE.txt": "/static/js/6.2c1cb247.chunk.js.LICENSE.txt",
+    "static/media/DARK.svg": "/static/media/DARK.9b10e100.svg",
+    "static/media/Inventory_Item_Template.xlsx": "/static/media/Inventory_Item_Template.92ad17c6.xlsx",
+    "static/media/Inventory_Pricing_Template.xlsx": "/static/media/Inventory_Pricing_Template.57a0ce81.xlsx",
+    "static/media/Inventory_Stock_Template.xlsx": "/static/media/Inventory_Stock_Template.790ddf30.xlsx",
+    "static/media/LIGHT.svg": "/static/media/LIGHT.6720b7b2.svg"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.e57e82fa.js",
+    "static/css/6.73d4c483.chunk.css",
+    "static/js/6.2c1cb247.chunk.js",
+    "static/css/main.630a69b2.chunk.css",
+    "static/js/main.90bc14c2.chunk.js"
+  ]
+}
