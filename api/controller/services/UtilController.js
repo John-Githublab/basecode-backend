@@ -67,6 +67,7 @@ module.exports = {
       // Decrypt
       let bytes = CryptoJS.AES.decrypt(passwordHash, secretKey);
       let decryptedPwd = bytes.toString(CryptoJS.enc.Utf8);
+      console.log('decryptedPwd', decryptedPwd);
       if (decryptedPwd === userPassword) {
         returnObj = responseCode.passwordMatched;
       }

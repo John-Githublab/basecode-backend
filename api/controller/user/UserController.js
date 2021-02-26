@@ -332,7 +332,7 @@ module.exports = {
     try {
       let createObj = req.body;
       createObj['emailVerified'] = true;
-      let user={}
+      let user = {};
       userCode = returnCode.validSession;
       let userResult = await User.find({
         userName: req.body.mobileNo,
@@ -362,25 +362,24 @@ module.exports = {
           UtilController.pad(tagPatientResult.sequenceNo, 5);
         let userResult = await User.create(createObj);
         user = await User.findById(userResult._id)
-        .select(
-          'fname lname email mobileNo userName profileImage userType permission deliveryAddress gender dob'
-        )
-        .populate('permission')
-        .lean();
+          .select(
+            'fname lname email mobileNo userName profileImage userType permission deliveryAddress gender dob'
+          )
+          .populate('permission')
+          .lean();
         req.session.userId = userResult._id;
-          let Result = await User.findByIdAndUpdate(userResult._id, {
-            lastLogin: Math.floor(Date.now() / 1000),
-          }).select('areaId userType isSuperAdmin');
+        let Result = await User.findByIdAndUpdate(userResult._id, {
+          lastLogin: Math.floor(Date.now() / 1000),
+        }).select('areaId userType isSuperAdmin');
 
-          req.session.isSuperAdmin = Result.isSuperAdmin;
+        req.session.isSuperAdmin = Result.isSuperAdmin;
       } else {
         userCode = returnCode.duplicate;
       }
 
-
       UtilController.sendSuccess(req, res, next, {
         responseCode: userCode,
-        user:user,
+        user: user,
         message: 'User is Created successfully',
       });
     } catch (err) {
@@ -814,223 +813,18 @@ module.exports = {
       UtilController.sendError(req, res, next, err);
     }
   },
-  removePatientFromUser: async (req, res, next) => {
-    try {
-      let user = await User.findById(req.session.userId).select(
-        'patient caregiver name mobileNo'
-      );
-      let patient = await User.findById(req.body.recordId).select(
-        'patient caregiver name mobileNo'
-      );
-      let updatedUser = user;
-      var index = updatedUser.patient.indexOf(req.body.recordId);
-      var index_patient = patient.caregiver.indexOf(req.session.userId);
-      if (index > -1) {
-        updatedUser.patient.splice(index, 1);
-      }
-      if(index_patient>-1){
-        patient.caregiver.splice(index_patient, 1);
-      }
-      await User.findByIdAndUpdate(req.session.userId, updatedUser);
-      await User.findByIdAndUpdate(req.body.recordId, patient);
-      UtilController.sendSuccess(req, res, next, {});
-    } catch (err) {
-      console.log(err);
-      UtilController.sendError(req, res, next, err);
-    }
-  },
-  removeCaregiverFromUser: async (req, res, next) => {
-    try {
-      let user = await User.findById(req.session.userId).select(
-        'patient caregiver name mobileNo'
-      );
-      let caregiver = await User.findById(req.body.recordId).select(
-        'patient caregiver name mobileNo'
-      );
-      let updatedUser = user;
-      var index = updatedUser.caregiver.indexOf(req.body.recordId);
-      var index_caregiver = caregiver.patient.indexOf(req.session.userId);
-      if (index > -1) {
-        updatedUser.caregiver.splice(index, 1);
-      }
-      if(index_caregiver>-1){
-        caregiver.patient.splice(index_caregiver, 1);
-      }
-      await User.findByIdAndUpdate(req.session.userId, updatedUser);
-      await User.findByIdAndUpdate(req.body.recordId, caregiver);
-      UtilController.sendSuccess(req, res, next, {});
-    } catch (err) {
-      console.log(err);
-      UtilController.sendError(req, res, next, err);
-    }
-  },
-  addPatientToUserSendOTP: async (req, res, next) => {
-    try {
-      let userResult = await User.findOne({ userName: req.body.mobileNo });
-      let presentUser = await User.findOne({ _id: req.session.userId });
-      userCode = returnCode.emailNotFound;
-      if (!(typeof userResult === 'undefined' || userResult === null)) {
-        var userPresentInCaregiver = presentUser.caregiver.indexOf(
-          userResult._id
-        );
-        if (userPresentInCaregiver <= -1) {
-          var userPresentInPatient = presentUser.patient.indexOf(
-            userResult._id
-          );
-
-          if (userPresentInPatient <= -1) {
-            let otpVal = UtilController.getOTP({
-              mobileNo: req.body.mobileNo,
-              email: '',
-            });
-            userCode = returnCode.validSession;
-            systemCache.set(configuration.login.otpValidation); // 5 minute time
-
-            req.session.otpVal = otpVal;
-            if (!(Number(req.body.mobileNo) === 09876543210)) {
-              NotificationController.userMobileNoOtp({
-                mobileNo: userResult.mobileNo,
-                otp: otpVal,
-                data: {
-                  otp: otpVal,
-                },
-              });
-            }
-          } else {
-            userCode = returnCode.duplicate;
-          }
-        } else {
-          userCode = returnCode.noPermission;
-        }
-      }
-
-      UtilController.sendSuccess(req, res, next, {
-        responseCode: userCode,
-      });
-    } catch (err) {
-      console.log(err);
-      UtilController.sendError(req, res, next, err);
-    }
-  },
-  addPatientToUser: async (req, res, next) => {
-    try {
-      let response = returnCode.invalidToken;
-      let userResult = {};
-      if (Number(req.body.otpVal) === Number(req.session.otpVal)) {
-        response = returnCode.validSession;
-        let patient = await User.findOne({
-          userName: req.body.mobileNo,
-        }).select('patient caregiver name mobileNo');
-        let user = await User.findById(req.session.userId).select(
-          'patient caregiver name mobileNo'
-        );
-        let updatedUser = user;
-        var index = updatedUser.patient.indexOf(patient._id);
-        console.log(index);
-        if (index <= -1) {
-          updatedUser.patient.push(patient._id);
-          patient.caregiver.push(user._id)
-        }
-        await User.findByIdAndUpdate(req.session.userId, updatedUser);
-        await User.findByIdAndUpdate(patient._id, patient);
-      }
-      UtilController.sendSuccess(req, res, next, {
-        responseCode: response,
-        //user: userResult,
-      });
-    } catch (err) {
-      UtilController.sendError(req, res, next, err);
-    }
-  },
-
-  addCaregiverToUserSendOTP: async (req, res, next) => {
-    try {
-      let userResult = await User.findOne({ userName: req.body.mobileNo });
-      let presentUser = await User.findOne({ _id: req.session.userId });
-      userCode = returnCode.emailNotFound;
-      if (!(typeof userResult === 'undefined' || userResult === null)) {
-        var userPresentInPatient = presentUser.patient.indexOf(userResult._id);
-
-        if (userPresentInPatient <= -1) {
-          var userPresentInCaregiver = presentUser.caregiver.indexOf(
-            userResult._id
-          );
-          if (userPresentInCaregiver <= -1) {
-            let otpVal = UtilController.getOTP({
-              mobileNo: req.body.mobileNo,
-              email: '',
-            });
-            userCode = returnCode.validSession;
-            systemCache.set(configuration.login.otpValidation); // 5 minute time
-
-            req.session.otpVal = otpVal;
-            if (!(Number(req.body.mobileNo) === 09876543210)) {
-              NotificationController.userMobileNoOtp({
-                mobileNo: userResult.mobileNo,
-                otp: otpVal,
-                data: {
-                  otp: otpVal,
-                },
-              });
-            }
-          } else {
-            userCode = returnCode.duplicate;
-          }
-        } else {
-          userCode = returnCode.noPermission;
-        }
-      }
-
-      UtilController.sendSuccess(req, res, next, {
-        responseCode: userCode,
-      });
-    } catch (err) {
-      console.log(err);
-      UtilController.sendError(req, res, next, err);
-    }
-  },
-  addCaregiverToUser: async (req, res, next) => {
-    try {
-      let response = returnCode.invalidToken;
-      let userResult = {};
-      if (Number(req.body.otpVal) === Number(req.session.otpVal)) {
-        response = returnCode.validSession;
-        let patient = await User.findOne({
-          userName: req.body.mobileNo,
-        }).select('patient caregiver name mobileNo');
-        let user = await User.findById(req.session.userId).select(
-          'patient caregiver name mobileNo'
-        );
-        let updatedUser = user;
-        var index = updatedUser.caregiver.indexOf(patient._id);
-        console.log(index);
-        if (index <= -1) {
-          updatedUser.caregiver.push(patient._id);
-          patient.patient.push(updatedUser._id)
-        }
-        await User.findByIdAndUpdate(req.session.userId, updatedUser);
-        await User.findByIdAndUpdate(patient._id, patient);
-      }
-      UtilController.sendSuccess(req, res, next, {
-        responseCode: response,
-        //user: userResult,
-      });
-    } catch (err) {
-      UtilController.sendError(req, res, next, err);
-    }
-  },
 
   checkUserPresent: async (req, res, next) => {
     try {
-      console.log(req.query)
+      console.log(req.query);
       let response = returnCode.invalidToken;
       let result = await User.find({
-        userName:req.query.mobileNo
-      })
-      console.log(result)
-      if(result.length>0){
+        userName: req.query.mobileNo,
+      });
+      console.log(result);
+      if (result.length > 0) {
         response = returnCode.validSession;
-      }else{
+      } else {
         let otpVal = UtilController.getOTP({
           mobileNo: req.query.mobileNo,
           email: '',
@@ -1059,10 +853,10 @@ module.exports = {
   },
   checkUserPresentVerifyOtp: async (req, res, next) => {
     try {
-      console.log(req.query)
+      console.log(req.query);
       let response = returnCode.invalidToken;
 
-      if(req.session.otpVal===req.query.otpVal){
+      if (req.session.otpVal === req.query.otpVal) {
         response = returnCode.validSession;
       }
       UtilController.sendSuccess(req, res, next, {
