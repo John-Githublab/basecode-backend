@@ -1,10 +1,11 @@
 module.exports = {
-  dbUrl:'mongodb+srv://geek023:Rscubo8L6v8cqSWn@cluster0.lr8pp.mongodb.net/myanclinic?retryWrites=true&w=majority',
-    backup:{
-      db:{
-        path:"/home/ec2-user/_backup" // chage here based on os E://Clients/Myanmar/MyanPro/_backup
-      }
+  dbUrl:
+    'mongodb+srv://geek023:Rscubo8L6v8cqSWn@cluster0.lr8pp.mongodb.net/vaxishield?retryWrites=true&w=majority',
+  backup: {
+    db: {
+      path: '/home/ec2-user/_backup', // chage here based on os E://Clients/Myanmar/MyanPro/_backup
     },
+  },
   aws: {
     CognitoIdentityCredentials: {
       IdentityPoolId: 'ap-south-1:649af36f-e5a4-4138-8b30-1b2c67a5b4e6',
@@ -30,7 +31,7 @@ module.exports = {
     photosBucket: '',
     prescriptionBucket: '',
     doctorBucket: 'myanclinic/doctor', // doctor profile images
-    clinicBucket: 'myanclinic/clinic',// this is to upload clinic or hospital images
+    clinicBucket: 'myanclinic/clinic', // this is to upload clinic or hospital images
     invoicesBucket: 'myanclinic/modules',
     attachmentsBucket: 'myanclinic/attachment',
     userBucket: 'myanclinic/user',
@@ -59,6 +60,6 @@ module.exports = {
   //   key_id: 'rzp_test_J5vFcCXdPM6fRR',
   //   key_secret: 'lTRTXkOKydp39lrQZHM6HCLl'
   // },
-  // hostName: 'http://localhost:3000'
-  hostName: 'http://myanclinic.com/app',
+  hostName: 'http://localhost:3000',
+  // hostName: 'http://myanclinic.com/app',
 };

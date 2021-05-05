@@ -1,18 +1,18 @@
-let request = require('request');
-let mongoose = require('mongoose');
-var CryptoJS = require('crypto-js');
-const connection = require('./../../../config/connection');
-const configuration = require('./../../../config/configuration');
-const returnCode = require('./../../../config/responseCode').returnCode;
-const User = require('./../../models/User');
-const Option = require('./../../models/Option');
-const Notification = require('./../../models/Notification');
-const AuthorizationController = require('./../services/AuthorizationController');
-const NotificationController = require('./../services/NotificationController');
-const UtilController = require('./../services/UtilController');
-const Tag = require('./../../models/Tag');
-var passwordSecretKey = 'Admin@2O$0'; // (pimarq)this is standerd key to generate password
-const NodeCache = require('node-cache');
+let request = require("request");
+let mongoose = require("mongoose");
+var CryptoJS = require("crypto-js");
+const connection = require("./../../../config/connection");
+const configuration = require("./../../../config/configuration");
+const returnCode = require("./../../../config/responseCode").returnCode;
+const User = require("./../../models/User");
+const Option = require("./../../models/Option");
+const Notification = require("./../../models/Notification");
+const AuthorizationController = require("./../services/AuthorizationController");
+const NotificationController = require("./../services/NotificationController");
+const UtilController = require("./../services/UtilController");
+const Tag = require("./../../models/Tag");
+var passwordSecretKey = "Vaxi@2O$1"; // (pimarq)this is standerd key to generate password
+const NodeCache = require("node-cache");
 const systemCache = new NodeCache({
   stdTTL: 3600,
   checkperiod: configuration.login.otpValidation,
@@ -23,7 +23,7 @@ module.exports = {
   accountLoginStatus: async function (req, res, next) {
     try {
       let responseCode = returnCode.invalidSession;
-      let userType = '';
+      let userType = "";
       let user, receiverId;
       let notificationCount = 0;
 
@@ -37,9 +37,9 @@ module.exports = {
         }
         user = await User.findById(req.session.userId)
           .select(
-            'fname lname email mobileNo userName profileImage userType permission deliveryAddress gender dob'
+            "fname lname email mobileNo userName profileImage userType permission deliveryAddress gender dob isSuperAdmin"
           )
-          .populate('permission')
+          .populate("permission")
           .lean();
         //         notificationCount = await Notification.countDocuments({
         //   receiverId,
@@ -57,9 +57,9 @@ module.exports = {
   },
   accountLogin: async function (req, res, next) {
     try {
-      console.log('req');
+      console.log("req");
       let userCode = returnCode.validEmail;
-      let userType = 'user';
+      let userType = "user";
       let emailId = req.body.email;
       let userName = req.body.email;
       let password = req.body.password;
@@ -71,10 +71,10 @@ module.exports = {
           userName,
           active: true,
         }).select(
-          'fname active mobileNo email userTag passwordAttempt emailVerified '
+          "fname active mobileNo email userTag passwordAttempt emailVerified "
         );
         userCode = UtilController.checkEmailStatus(emailCheck);
-        console.log('userCode', userCode + '     ' + returnCode.validEmail);
+        console.log("userCode", userCode + "     " + returnCode.validEmail);
         req.session.userCode = userCode;
         if (userCode === returnCode.validEmail) {
           req.session.username = userName;
@@ -98,7 +98,7 @@ module.exports = {
           let emailObj = await User.findOne({
             userName: req.session.username,
           }).select(
-            'fname active email mobileNo userTag  password passwordAttempt emailVerified userType areaId isSuperAdmin'
+            "fname active email mobileNo userTag  password passwordAttempt emailVerified userType areaId isSuperAdmin"
           );
 
           userCode = UtilController.comparePassword(
@@ -106,12 +106,12 @@ module.exports = {
             password,
             passwordSecretKey
           );
-          console.log(' comparePassword' + userCode);
+          console.log(" comparePassword" + userCode);
           if (userCode === returnCode.passwordMatched) {
             // check for two factor authorization
-            if (configuration.login['2FactorAuthentication']) {
-              userCode = returnCode['2FactorEnabled'];
-              console.log('sessionId', req.sessionID);
+            if (configuration.login["2FactorAuthentication"]) {
+              userCode = returnCode["2FactorEnabled"];
+              console.log("sessionId", req.sessionID);
               systemCache.set(
                 req.sessionID,
                 emailObj._id,
@@ -130,7 +130,7 @@ module.exports = {
                 {
                   lastLogin: Math.floor(Date.now() / 1000),
                 }
-              ).select('areaId userType');
+              ).select("areaId userType");
             }
           } else {
             await User.findOneAndUpdate(
@@ -161,16 +161,16 @@ module.exports = {
         userName: req.body.mobileNo,
       };
       let userResult = await User.findOne(queryObj).select(
-        'fname active email mobileNo userTag  password passwordAttempt emailVerified userType areaId isSuperAdmin'
+        "fname active email mobileNo userTag  password passwordAttempt emailVerified userType areaId isSuperAdmin"
       );
 
       //req.session.mobileNo = req.body.mobileNo;
 
       userCode = returnCode.emailNotFound;
-      if (!(typeof userResult === 'undefined' || userResult === null)) {
+      if (!(typeof userResult === "undefined" || userResult === null)) {
         let otpVal = UtilController.getOTP({
           mobileNo: req.body.mobileNo,
-          email: '',
+          email: "",
         });
         userCode = returnCode.validSession;
         systemCache.set(
@@ -209,39 +209,13 @@ module.exports = {
       if (Number(req.body.otpVal) === Number(req.session.otpVal)) {
         response = returnCode.validSession;
         let userSes = systemCache.get(req.sessionID);
-        if (!(typeof userSes === 'undefined' || userSes === null)) {
+        if (!(typeof userSes === "undefined" || userSes === null)) {
           req.session.userId = userSes;
           let userResult = await User.findByIdAndUpdate(userSes, {
             lastLogin: Math.floor(Date.now() / 1000),
-          }).select('areaId userType isSuperAdmin');
+          }).select("areaId userType isSuperAdmin");
 
           req.session.isSuperAdmin = userResult.isSuperAdmin;
-          //req.session.areaId=userResult.areaId;
-          systemCache.del(req.sessionID);
-        } else {
-          response = returnCode.invalidToken;
-        }
-      }
-      UtilController.sendSuccess(req, res, next, {
-        responseCode: response,
-        //user: userResult,
-      });
-    } catch (err) {
-      UtilController.sendError(req, res, next, err);
-    }
-  },
-
-  verifyOtpNewAdmin: async (req, res, next) => {
-    try {
-      let response = returnCode.invalidToken;
-      let userResult = {};
-
-      if (Number(req.body.otpVal) === Number(req.session.otpVal)) {
-        response = returnCode.validSession;
-        let userSes = systemCache.get(req.sessionID);
-        if (!(typeof userSes === 'undefined' || userSes === null)) {
-          req.session.userId = userSes;
-
           //req.session.areaId=userResult.areaId;
           systemCache.del(req.sessionID);
         } else {
@@ -260,9 +234,9 @@ module.exports = {
     try {
       let bufferObj = req.query.ui;
 
-      let buf = new Buffer(bufferObj, 'base64');
+      let buf = new Buffer(bufferObj, "base64");
 
-      let decodedContent = buf.toString('ascii');
+      let decodedContent = buf.toString("ascii");
       let user = await User.findOne({ userTag: decodedContent });
 
       let otpVal = UtilController.getOTP({
@@ -281,7 +255,7 @@ module.exports = {
         data: {
           otp: otpVal,
         },
-        content: 'your otp is this',
+        content: "your otp is this",
       });
 
       UtilController.sendSuccess(req, res, next, {
@@ -296,9 +270,9 @@ module.exports = {
     try {
       let response;
       let userSes = systemCache.get(req.sessionID);
-      if (!(typeof userSes === 'undefined' || userSes === null)) {
+      if (!(typeof userSes === "undefined" || userSes === null)) {
         let userObj = await User.findById(userSes).select(
-          'fname active email mobileNo userTag emailVerified'
+          "fname active email mobileNo userTag emailVerified"
         );
         await module.exports.sendOtp(req, userObj);
       } else {
@@ -331,7 +305,7 @@ module.exports = {
   create: async (req, res, next) => {
     try {
       let createObj = req.body;
-      createObj['emailVerified'] = true;
+      createObj["emailVerified"] = true;
       let user = {};
       userCode = returnCode.validSession;
       let userResult = await User.find({
@@ -341,15 +315,15 @@ module.exports = {
         let tagResult = await Tag.findOneAndUpdate(
           {
             active: true,
-            tagType: 'users',
+            tagType: "users",
           },
           { $inc: { sequenceNo: 1 }, updatedAt: Math.floor(Date.now() / 1000) }
         );
-        createObj['userTag'] = tagResult.sequenceNo;
+        createObj["userTag"] = tagResult.sequenceNo;
         let tagPatientResult = await Tag.findOneAndUpdate(
           {
             active: true,
-            tagType: 'patient',
+            tagType: "patient",
           },
           {
             $inc: { sequenceNo: 1 },
@@ -357,20 +331,20 @@ module.exports = {
           }
         );
 
-        createObj['patientId'] =
+        createObj["patientId"] =
           tagPatientResult.prefix +
           UtilController.pad(tagPatientResult.sequenceNo, 5);
         let userResult = await User.create(createObj);
         user = await User.findById(userResult._id)
           .select(
-            'fname lname email mobileNo userName profileImage userType permission deliveryAddress gender dob'
+            "fname lname email mobileNo userName profileImage userType permission deliveryAddress gender dob"
           )
-          .populate('permission')
+          .populate("permission")
           .lean();
         req.session.userId = userResult._id;
         let Result = await User.findByIdAndUpdate(userResult._id, {
           lastLogin: Math.floor(Date.now() / 1000),
-        }).select('areaId userType isSuperAdmin');
+        }).select("areaId userType isSuperAdmin");
 
         req.session.isSuperAdmin = Result.isSuperAdmin;
       } else {
@@ -380,7 +354,7 @@ module.exports = {
       UtilController.sendSuccess(req, res, next, {
         responseCode: userCode,
         user: user,
-        message: 'User is Created successfully',
+        message: "User is Created successfully",
       });
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -389,7 +363,7 @@ module.exports = {
   update: async (req, res, next) => {
     try {
       let updateObj = req.body;
-      updateObj['$push'] = {
+      updateObj["$push"] = {
         logs: {
           userId: req.session.userId,
           data: updateObj,
@@ -397,7 +371,7 @@ module.exports = {
       };
       await User.findByIdAndUpdate(req.body.userId, updateObj);
       UtilController.sendSuccess(req, res, next, {
-        message: 'User is updated successfully',
+        message: "User is updated successfully",
       });
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -417,7 +391,7 @@ module.exports = {
         },
       });
       UtilController.sendSuccess(req, res, next, {
-        message: 'User is deleted successfully',
+        message: "User is deleted successfully",
       });
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -443,7 +417,7 @@ module.exports = {
         },
       });
       UtilController.sendSuccess(req, res, next, {
-        message: 'User passwordAttempt reset is done successfully',
+        message: "User passwordAttempt reset is done successfully",
       });
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -457,19 +431,19 @@ module.exports = {
         active: true,
         //email: emailId
       }).select(
-        'fname active email userName fname userTag mobileNo passwordAttempt emailVerified '
+        "fname active email userName fname userTag mobileNo passwordAttempt emailVerified "
       );
       let newPassword = Math.random().toString(36).slice(-8);
       let emailAccount = {
         email: emailCheck.email,
-        receiverName: '',
+        receiverName: "",
         userName: emailCheck.userName,
       };
 
       userCode = UtilController.checkEmailStatus(emailCheck);
       if (userCode === returnCode.validEmail) {
         // send password in email
-        emailAccount['receiverName'] = emailCheck.fname;
+        emailAccount["receiverName"] = emailCheck.fname;
         NotificationController.forgotPassword({
           //userId: req.session.userId,
           //emailId,
@@ -483,7 +457,7 @@ module.exports = {
       systemCache.set(newPassword, emailAccount, 1200); // 20 minute time
       UtilController.sendSuccess(req, res, next, {
         responseCode: userCode,
-        message: 'User forgot password request is sent over the email',
+        message: "User forgot password request is sent over the email",
       });
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -501,7 +475,7 @@ module.exports = {
       );
       let encriptedNewPassword = encriptedNewPsw.toString();
       let userEmailObj = await User.findById(req.session.userId).select(
-        'fname active email password'
+        "fname active email password"
       );
       userCode = UtilController.comparePassword(
         userEmailObj.password,
@@ -517,7 +491,7 @@ module.exports = {
 
       UtilController.sendSuccess(req, res, next, {
         responseCode: userCode,
-        message: 'User password reset is done successfully',
+        message: "User password reset is done successfully",
       });
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -525,7 +499,7 @@ module.exports = {
   },
   sendPromotionalEmail: async function (req, res, next) {
     try {
-      let toEmail = req.body.destination.split(',');
+      let toEmail = req.body.destination.split(",");
       let delay = 2000;
       for (let i = 0; i < toEmail.length; i++) {
         if (i % 10 == 0) {
@@ -546,13 +520,13 @@ module.exports = {
         }
       }
       res.status(200).send({
-        status: 'success',
+        status: "success",
         code: 1,
       });
     } catch (err) {
       console.error(err);
       res.status(200).send({
-        status: 'failure',
+        status: "failure",
         code: 6,
         errorCode: err.code,
         message: err.message,
@@ -566,7 +540,7 @@ module.exports = {
           email: userEmails[i],
           active: true,
           subscribe: true,
-        }).select('fname email');
+        }).select("fname email");
         if (cntVal !== undefined && cntVal.length > 0) {
           NotificationController.userCustomEmail({
             userId: cntVal[0]._id,
@@ -590,7 +564,7 @@ module.exports = {
         responseCode = returnCode.noDuplicate;
       }
       UtilController.sendSuccess(req, res, next, {
-        message: 'User account plan is upgrated successfully',
+        message: "User account plan is upgrated successfully",
         responseCode,
       });
     } catch (err) {
@@ -606,8 +580,8 @@ module.exports = {
       if (userCnt === 0) {
         responseCode = returnCode.noDuplicate;
         let updateObj = req.body;
-        updateObj['active'] = true;
-        updateObj['$push'] = {
+        updateObj["active"] = true;
+        updateObj["$push"] = {
           logs: {
             userId: req.session.userId,
             data: {
@@ -617,20 +591,20 @@ module.exports = {
         };
         let newPassword = Math.random().toString(36).slice(-8);
         var ciphertext = CryptoJS.AES.encrypt(newPassword, passwordSecretKey);
-        updateObj['password'] = ciphertext.toString();
+        updateObj["password"] = ciphertext.toString();
         await User.findByIdAndUpdate(req.body.userId, updateObj);
         // send user login credentials
         NotificationController.userCredentials({
           userId: req.body.userId,
           userName: updateObj.userName,
           password: newPassword,
-          receiverName: '',
-          userType: 'user',
+          receiverName: "",
+          userType: "user",
         });
       }
       UtilController.sendSuccess(req, res, next, {
         responseCode,
-        message: 'User account is activated successfully',
+        message: "User account is activated successfully",
       });
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -639,11 +613,11 @@ module.exports = {
   profileInfo: async (req, res, next) => {
     try {
       let profile = await User.findById(req.session.userId).select(
-        '-logs -password'
+        "-logs -password"
       );
       UtilController.sendSuccess(req, res, next, {
         profile,
-        message: 'User profile info',
+        message: "User profile info",
       });
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -655,7 +629,7 @@ module.exports = {
       await User.findByIdAndUpdate(req.session.userId, profileObj);
 
       UtilController.sendSuccess(req, res, next, {
-        message: 'User profile is updated successfully',
+        message: "User profile is updated successfully",
       });
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -673,7 +647,7 @@ module.exports = {
       );
       let encriptedNewPassword = encriptedNewPsw.toString();
       let response = returnCode.invalidToken;
-      if (!(typeof emailObj === 'undefined' || emailObj === null)) {
+      if (!(typeof emailObj === "undefined" || emailObj === null)) {
         await User.findOneAndUpdate(
           {
             userName: emailObj.userName,
@@ -711,7 +685,7 @@ module.exports = {
         }
       );
       UtilController.sendSuccess(req, res, next, {
-        message: 'user account is unsubscribed successfully',
+        message: "user account is unsubscribed successfully",
       });
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -723,7 +697,7 @@ module.exports = {
         req.session.destroy();
       }
       UtilController.sendSuccess(req, res, next, {
-        message: 'user account is logout successfully',
+        message: "user account is logout successfully",
       });
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -733,7 +707,7 @@ module.exports = {
     try {
       UtilController.uploadFiles(req, res, next);
     } catch (err) {
-      console.log('uploadFiles -catch');
+      console.log("uploadFiles -catch");
       console.log(err);
       UtilController.sendError(req, res, next, err);
     }
@@ -742,7 +716,7 @@ module.exports = {
     try {
       let queryObj = {};
       if (!UtilController.isEmpty(req.query.name)) {
-        queryObj['name'] = req.query.name;
+        queryObj["name"] = req.query.name;
       }
       let result = await Option.find(queryObj);
       UtilController.sendSuccess(req, res, next, {
@@ -757,38 +731,38 @@ module.exports = {
       let searchKey = req.query.keyword;
       let queryObj = {
         active: true,
-        userType: 'user',
+        userType: "user",
       };
       if (!UtilController.isEmpty(searchKey)) {
-        queryObj['$or'] = [
+        queryObj["$or"] = [
           {
             mobileNo: {
               $regex: searchKey,
-              $options: 'i',
+              $options: "i",
             },
           },
           {
             fname: {
               $regex: searchKey,
-              $options: 'i',
+              $options: "i",
             },
           },
           {
             lname: {
               $regex: searchKey,
-              $options: 'i',
+              $options: "i",
             },
           },
           {
             email: {
               $regex: searchKey,
-              $options: 'i',
+              $options: "i",
             },
           },
         ];
       }
       let result = await User.find(queryObj)
-        .select('fname lname mobileNo email profileImage gender')
+        .select("fname lname mobileNo email profileImage gender")
         .sort({ fname: 1 });
       UtilController.sendSuccess(req, res, next, {
         result,
@@ -801,10 +775,10 @@ module.exports = {
     try {
       let user = await User.findById(req.session.userId)
         .select(
-          'patient caregiver fname lname mobileNo email gender profileImage bloodGroup dob city state country pin fragmentedAddress alcoholIntake allergies chronicConditions familyHistory height surgeries weight notification isSmoker address1 address2'
+          "patient caregiver fname lname mobileNo email gender profileImage bloodGroup dob city state country pin fragmentedAddress alcoholIntake allergies chronicConditions familyHistory height surgeries weight notification isSmoker address1 address2"
         )
-        .populate('patient', 'fname lname mobileNo email profileImage')
-        .populate('caregiver', 'fname lname mobileNo email profileImage');
+        .populate("patient", "fname lname mobileNo email profileImage")
+        .populate("caregiver", "fname lname mobileNo email profileImage");
       UtilController.sendSuccess(req, res, next, {
         user,
       });
@@ -827,7 +801,7 @@ module.exports = {
       } else {
         let otpVal = UtilController.getOTP({
           mobileNo: req.query.mobileNo,
-          email: '',
+          email: "",
         });
         userCode = returnCode.validSession;
         req.session.otpVal = otpVal;

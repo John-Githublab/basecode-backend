@@ -417,6 +417,7 @@ module.exports = {
   },
   userCredentials: async (notification) => {
     try {
+      console.log('notification', notification);
       notification['title'] = 'userCredentials';
       notification['notificationType'] = 'email';
       let notifyTemplate = await module.exports.replaceTemplateDynamicVariable(

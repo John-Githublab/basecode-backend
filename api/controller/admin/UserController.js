@@ -1,8 +1,6 @@
 let request = require('request');
-let fs = require('fs');
 let mongoose = require('mongoose');
 var CryptoJS = require('crypto-js');
-const connection = require('./../../../config/connection');
 const User = require('./../../models/User');
 const DataFileUpload = require('./../../models/DataFileUpload');
 const Tag = require('./../../models/Tag');
@@ -13,9 +11,8 @@ const NotificationController = require('./../services/NotificationController');
 const UtilController = require('./../services/UtilController');
 const returnCode = require('./../../../config/responseCode').returnCode;
 
-var passwordSecretKey = 'Admin@2O$0'; // (pimarq)this is standerd key to generate password
+var passwordSecretKey = 'Vaxi@2O$1'; // (pimarq)this is standerd key to generate password
 const NodeCache = require('node-cache');
-const Case = require('../../models/Case');
 
 const systemCache = new NodeCache({
   stdTTL: 3600,
@@ -23,6 +20,170 @@ const systemCache = new NodeCache({
 });
 
 module.exports = {
+  accountLoginStatus: async function (req, res, next) {
+    try {
+      let responseCode = returnCode.invalidSession;
+      let userType = '';
+      let user, receiverId;
+      let notificationCount = 0;
+
+      if (!UtilController.isEmpty(req.session.userId)) {
+        responseCode = returnCode.validSession;
+        receiverId = req.session.userId;
+        if (!UtilController.isEmpty(req.query.fcmToken)) {
+          await User.findByIdAndUpdate(req.session.userId, {
+            fcmToken: req.query.fcmToken,
+          });
+        }
+        user = await User.findById(req.session.userId)
+          .select(
+            'fname lname email mobileNo userName profileImage userType permission deliveryAddress gender dob'
+          )
+          .populate('permission')
+          .lean();
+        //         notificationCount = await Notification.countDocuments({
+        //   receiverId,
+        //   read: false
+        // });
+      }
+      UtilController.sendSuccess(req, res, next, {
+        responseCode,
+        user,
+        notificationCount,
+      });
+    } catch (err) {
+      UtilController.sendError(req, res, next, err);
+    }
+  },
+  accountLogin: async function (req, res, next) {
+    try {
+      let userCode = returnCode.validEmail;
+      let userType = 'user';
+      let emailId = req.body.email;
+      let userName = req.body.email;
+      let password = req.body.password;
+
+      // check the email, only emap
+      if (!UtilController.isEmpty(userName)) {
+        userName = userName.trim();
+        let emailCheck = await User.findOne({
+          //email: emailId
+          userName,
+          active: true,
+        }).select(
+          'fname active mobileNo email userTag passwordAttempt emailVerified '
+        );
+        console.log('emailCheck', emailCheck);
+        userCode = UtilController.checkEmailStatus(emailCheck);
+        console.log('userCode', userCode + '     ' + returnCode.validEmail);
+        req.session.userCode = userCode;
+        if (userCode === returnCode.validEmail) {
+          req.session.username = userName;
+        }
+      }
+      // check the password
+      if (!UtilController.isEmpty(password)) {
+        // first check the userType, then check the password in respective collection
+        if (
+          UtilController.isEmpty(req.session.username) ||
+          UtilController.isEmpty(req.session.userCode) ||
+          req.session.userCode !== returnCode.validEmail
+        ) {
+          userCode = returnCode.invalidSession; //Session is not valid, relogin to generate new session and associate
+          if (!UtilController.isEmpty(req.session.userCode)) {
+            userCode = req.session.userCode;
+          }
+        } else {
+          let emailObj = await User.findOne({
+            userName: req.session.username,
+          }).select(
+            'fname active email mobileNo userTag  password passwordAttempt emailVerified userType areaId isSuperAdmin'
+          );
+
+          console.log('emailObj', emailObj);
+
+          userCode = UtilController.comparePassword(
+            emailObj.password,
+            password,
+            passwordSecretKey
+          );
+          console.log(' comparePassword' + userCode);
+          if (userCode === returnCode.passwordMatched) {
+            // check for two factor authorization
+            if (configuration.login['2FactorAuthentication']) {
+              userCode = returnCode['2FactorEnabled'];
+              console.log('sessionId', req.sessionID);
+              systemCache.set(
+                req.sessionID,
+                emailObj._id,
+                configuration.login.otpValidation
+              ); // 10 minute time
+              await module.exports.sendOtp(req, emailObj);
+            } else {
+              req.session.userId = emailObj._id;
+
+              req.session.isSuperAdmin = emailObj.isSuperAdmin;
+              //req.session.areaId=emailObj.areaId;
+              await User.findOneAndUpdate(
+                {
+                  userName: req.session.username,
+                },
+                {
+                  lastLogin: Math.floor(Date.now() / 1000),
+                }
+              ).select('areaId userType');
+            }
+          } else {
+            await User.findOneAndUpdate(
+              {
+                userName: req.session.username,
+              },
+              {
+                $inc: {
+                  passwordAttempt: 1,
+                },
+              }
+            );
+          }
+        }
+      }
+      UtilController.sendSuccess(req, res, next, {
+        responseCode: userCode,
+      });
+    } catch (err) {
+      UtilController.sendError(req, res, next, err);
+    }
+  },
+
+  verifyOtp: async (req, res, next) => {
+    try {
+      let response = returnCode.invalidToken;
+      let userResult = {};
+      if (Number(req.body.otpVal) === Number(req.session.otpVal)) {
+        response = returnCode.validSession;
+        let userSes = systemCache.get(req.sessionID);
+        if (!(typeof userSes === 'undefined' || userSes === null)) {
+          req.session.userId = userSes;
+          let userResult = await User.findByIdAndUpdate(userSes, {
+            lastLogin: Math.floor(Date.now() / 1000),
+          }).select('areaId userType isSuperAdmin');
+
+          req.session.isSuperAdmin = userResult.isSuperAdmin;
+          //req.session.areaId=userResult.areaId;
+          systemCache.del(req.sessionID);
+        } else {
+          response = returnCode.invalidToken;
+        }
+      }
+      UtilController.sendSuccess(req, res, next, {
+        responseCode: response,
+        //user: userResult,
+      });
+    } catch (err) {
+      UtilController.sendError(req, res, next, err);
+    }
+  },
+
   queryAllUser: async (req, res, next) => {
     try {
       let searchKey = req.body.keyword;
@@ -101,14 +262,7 @@ module.exports = {
 
   createUser: async (req, res, next) => {
     try {
-      console.log('reaching');
       let createObj = req.body;
-
-      createObj.dob = Math.floor(new Date(createObj.dob).getTime() / 1000.0);
-      createObj.allergies = createObj.allergies.toString();
-      createObj.chronicConditions = createObj.chronicConditions.toString();
-      createObj.familyHistory = createObj.familyHistory.toString();
-      createObj.surgeries = createObj.surgeries.toString();
 
       createObj['emailVerified'] = true;
       let userResult = await User.find({
@@ -116,50 +270,17 @@ module.exports = {
         userType: req.body.userType,
       });
 
+      console.log('userResult', userResult);
+
       if (userResult.length === 0) {
         createObj['userName'] = req.body.mobileNo;
 
         createObj['createdAt'] = Math.floor(Date.now() / 1000);
-        let tagResult = await Tag.findOneAndUpdate(
-          {
-            active: true,
-            tagType: 'users',
-          },
-          { $inc: { sequenceNo: 1 }, updatedAt: Math.floor(Date.now() / 1000) }
-        );
-        createObj['userTag'] = tagResult.sequenceNo;
-        let buf = Buffer.from(tagResult.sequenceNo.toString(), 'utf-8');
-        let bufferObj = buf.toString('base64');
 
-        let emailAccount = {
-          email: createObj.email,
-          receiverName: createObj.fname,
-          userName: createObj.userName,
-        };
+        if (createObj.userType === 'admin') {
+          // let userPassword = Math.random().toString(36).slice(-8);
+          let userPassword = 'vaxiAdmin';
 
-        if (createObj.userType === 'user') {
-          let tagPatientResult = await Tag.findOneAndUpdate(
-            {
-              active: true,
-              tagType: 'patient',
-            },
-            {
-              $inc: { sequenceNo: 1 },
-              updatedAt: Math.floor(Date.now() / 1000),
-            }
-          );
-
-          createObj['patientId'] =
-            tagPatientResult.prefix +
-            UtilController.pad(tagPatientResult.sequenceNo, 5);
-
-          NotificationController.newRegistration({
-            emailId: createObj.email,
-            confirmation: bufferObj,
-            receiverName: createObj.fname,
-          });
-        } else {
-          let userPassword = Math.random().toString(36).slice(-8);
           createObj['operatedBy'] = req.session.userId;
           var ciphertext = CryptoJS.AES.encrypt(
             userPassword,
@@ -176,7 +297,8 @@ module.exports = {
             },
           });
         }
-        console.log(createObj);
+
+        console.log('createObj', createObj);
         await User.create(createObj);
         UtilController.sendSuccess(req, res, next, {});
       } else {
@@ -246,7 +368,6 @@ module.exports = {
       let otpVal = UtilController.getOTP({
         mobileNo: user.mobileNo,
       });
-      let userCode = returnCode.validSession;
       systemCache.set(
         req.sessionID,
         user._id,
@@ -289,7 +410,6 @@ module.exports = {
   verifyOtpNewAdmin: async (req, res, next) => {
     try {
       let response = returnCode.invalidToken;
-      let userResult = {};
       console.log('req', req.body.otpVal, req.session.otpVal);
 
       if (Number(req.body.otpVal) === Number(req.session.otpVal)) {
@@ -327,6 +447,37 @@ module.exports = {
       }
       UtilController.sendSuccess(req, res, next, {
         responseCode: response,
+      });
+    } catch (err) {
+      UtilController.sendError(req, res, next, err);
+    }
+  },
+
+  sendOtp: async (req, userObj) => {
+    try {
+      let otpVal = UtilController.getOTP(userObj);
+      req.session.otpVal = otpVal;
+      NotificationController.sendUserOtp({
+        mobileNo: userObj.mobileNo,
+        email: userObj.email,
+        otp: otpVal,
+        data: {
+          otp: otpVal,
+          userName: userObj.fname,
+        },
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  },
+
+  accountLogout: async function (req, res, next) {
+    try {
+      if (!UtilController.isEmpty(req.session.userId)) {
+        req.session.destroy();
+      }
+      UtilController.sendSuccess(req, res, next, {
+        message: 'user account is logout successfully',
       });
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -373,7 +524,6 @@ module.exports = {
 
   resetPassword: async (req, res, next) => {
     try {
-      let userType = req.session.userType;
       let oldPassword = req.body.oldPassword;
       let userCode = returnCode.passwordMismatch;
       let encriptedNewPsw = CryptoJS.AES.encrypt(
@@ -458,36 +608,36 @@ module.exports = {
 
   forgotPasswordEmail: async (req, res, next) => {
     try {
-      console.log('reaching');
       let mobileNo = req.query.username.trim();
       let emailCheck = await User.findOne({
         userName: mobileNo,
         active: true,
         //email: emailId
-      }).select('name active email userTag passwordAttempt emailVerified ');
+      }).select(
+        'fname active email userName fname userTag mobileNo passwordAttempt emailVerified '
+      );
       let newPassword = Math.random().toString(36).slice(-8);
       let emailAccount = {
         email: emailCheck.email,
         receiverName: '',
+        userName: emailCheck.userName,
       };
 
       userCode = UtilController.checkEmailStatus(emailCheck);
       if (userCode === returnCode.validEmail) {
         // send password in email
-        emailAccount['receiverName'] = emailCheck.name;
+        emailAccount['receiverName'] = emailCheck.fname;
         NotificationController.forgotPassword({
           //userId: req.session.userId,
           //emailId,
           emailId: emailCheck.email,
           password: newPassword,
-          receiverName: emailCheck.name,
+          receiverName: emailCheck.fname,
         });
       }
 
-      console.log('new', newPassword);
       // update cache information
       systemCache.set(newPassword, emailAccount, 1200); // 20 minute time
-      console.log('system', systemCache.newPassword);
       UtilController.sendSuccess(req, res, next, {
         responseCode: userCode,
         message: 'User forgot password request is sent over the email',
@@ -496,10 +646,10 @@ module.exports = {
       UtilController.sendError(req, res, next, err);
     }
   },
-
   generatePassword: async (req, res, next) => {
     try {
-      let token = req.params.token.trim();
+      let token = req.query.token.trim();
+
       let emailObj = systemCache.get(token);
       let newPassword = Math.random().toString(36).slice(-8);
       let encriptedNewPsw = CryptoJS.AES.encrypt(
@@ -511,14 +661,13 @@ module.exports = {
       if (!(typeof emailObj === 'undefined' || emailObj === null)) {
         await User.findOneAndUpdate(
           {
-            email: emailObj.email,
+            userName: emailObj.userName,
           },
           {
             password: encriptedNewPassword,
           }
         );
 
-        console.log('newgen', newPassword);
         response = returnCode.newPasswordGenerated;
         NotificationController.generatedPassword({
           emailId: emailObj.email,

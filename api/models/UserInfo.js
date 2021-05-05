@@ -5,10 +5,10 @@ let userInfoSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
-  documents: {
-    type: Array,
-    default: [],
-  },
+  documents:[{
+    label:String,
+    url:String
+  }],
   height: {
     type: Number,
     default: 0,

@@ -5,34 +5,22 @@ let bookingSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  bookingType:{
-    type:String,
-    default:'self' // this value can be self or other, if it is other then capture patient details
-  },
-  relationship:{ // this will be applicable for other bookingType, basically to track booking user and patient relation
-    type:String,
-    default:''
-  },
-  name:{ // this is booked user name else patient name, this will help us to do search records based on name
-    type:String,
-    default:''
-  },
-  mobileNo:{
-    type:String,
-    default:''
-  },
-  email:{
-    type:String,
-    default:''
-  },
-  doctorId: { // this is doctor id, to whom booking as done
+  corporateId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'Corporate'
   },
-  clinicId: { // this is doctor id, to whom booking as done
+  brancheId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Clinic'
-  }, // this doctor location, where they will be available to consult
+    ref: 'Branch'
+  },
+  campaignId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Campaign'
+  },
+  bookingType: {
+    type: String,
+    default: 'employee' // employee or member this value can be self or other, if it is other then capture patient details
+  },
   bookingDate: { // booking date, it will be only date, this helps to find the previously booked slot on same date
     type: Number,
     default: () => Math.floor(Date.now() / 1000),
@@ -44,48 +32,34 @@ let bookingSchema = mongoose.Schema({
   slot: {
     type: String, // only to print or display the data, it will be in HH:mm:ss 09:30 am
   },
-  payment: {// payment billing with any discount and other
-    type: Number,
-    default: 0
-  },
-  paymentDone: {
-    type: Boolean,
-    default:false
-  },
-  paymentMode: {
+  status: { // this is the Vaccination status  values will be Vaccinated, Not Vaccinated, Reschedule
     type: String,
-    default:"" // online or cash , check
+    default: 'Not Vaccinated'
   },
-  paymentRefId: {
-    type: String,
-    default:""
-  },
-  paymentProof:{
-    description:{
-      type:String,
-      default:""
-    },
-    path:{
-      type:String,
-      default:""
-    },
-  },
-  receivedPayment:{
-    type:Number,
-    default:0
-  },
-  coupon:{
+  remark:{
     type:String,
-    default:""
+    default:''
   },
-  discount:{
-    type:Number,
-    default:0
+  dosage:{ // this need to capture while booking, is it 1st or 2nd, dropdown dosage 1 and dosage 2
+    type:String,
+    default:''
   },
   active: {
     type: Boolean,
     default: true,
   },
+  isShared:{ // this is to keep track of the sharing certificate
+    type: Boolean,
+    default: false,
+  },
+  isReported:{ // this is track the calling government api to report the regarding Vaccination
+    type: Boolean,
+    default: false,
+  },
+  observation:[{ // this will update after Vaccination, after 30 minute
+    title:String,
+    value:String
+  }],
   updatedAt: {
     type: Number,
     default: () => Math.floor(Date.now() / 1000),

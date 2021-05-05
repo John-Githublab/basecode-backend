@@ -2,7 +2,6 @@ let request = require("request");
 let mongoose = require("mongoose");
 const Option = require("../../models/Option");
 const User = require("../../models/User");
-const Subscription = require("../../models/Subscription");
 const Notification = require("../../models/Notification");
 const authorization = require("./../../../config/authorization");
 const connection = require("./../../../config/connection");
