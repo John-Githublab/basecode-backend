@@ -3,7 +3,6 @@ module.exports = {
     authNotRequire: [
       '/admin',
       '/accountLogin',
-      '/user/add',
       '/verify/otp',
       '/resend/otp',
       '/inventory/test',

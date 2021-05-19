@@ -1,6 +1,6 @@
 module.exports = {
   dbUrl:
-    'mongodb+srv://geek023:Rscubo8L6v8cqSWn@cluster0.lr8pp.mongodb.net/vaxishield?retryWrites=true&w=majority',
+    'mongodb+srv://geek023:Rscubo8L6v8cqSWn@cluster0.lr8pp.mongodb.net/geeks?retryWrites=true&w=majority',
   backup: {
     db: {
       path: '/home/ec2-user/_backup', // chage here based on os E://Clients/Myanmar/MyanPro/_backup

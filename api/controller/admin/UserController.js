@@ -279,7 +279,7 @@ module.exports = {
 
         if (createObj.userType === 'admin') {
           // let userPassword = Math.random().toString(36).slice(-8);
-          let userPassword = 'vaxiAdmin';
+          let userPassword = 'geeksAdmin';
 
           createObj['operatedBy'] = req.session.userId;
           var ciphertext = CryptoJS.AES.encrypt(
@@ -785,97 +785,6 @@ module.exports = {
     }
   },
 
-  searchAdmin: async (req, res, next) => {
-    try {
-      let searchKey = req.query.keyword;
-      let queryObj = {
-        active: true,
-        userType: 'admin',
-      };
-      if (!UtilController.isEmpty(searchKey)) {
-        queryObj['$or'] = [
-          {
-            mobileNo: {
-              $regex: searchKey,
-              $options: 'i',
-            },
-          },
-          {
-            fname: {
-              $regex: searchKey,
-              $options: 'i',
-            },
-          },
-          {
-            lname: {
-              $regex: searchKey,
-              $options: 'i',
-            },
-          },
-          {
-            email: {
-              $regex: searchKey,
-              $options: 'i',
-            },
-          },
-        ];
-      }
-      let result = await User.find(queryObj)
-        .select('fname lname mobileNo email profileImage gender')
-        .sort({ fname: 1 });
-      UtilController.sendSuccess(req, res, next, {
-        result,
-      });
-    } catch (err) {
-      UtilController.sendError(req, res, next, err);
-    }
-  },
-
-  searchUser: async (req, res, next) => {
-    try {
-      let searchKey = req.query.keyword;
-      let queryObj = {
-        active: true,
-        userType: 'user',
-      };
-      if (!UtilController.isEmpty(searchKey)) {
-        queryObj['$or'] = [
-          {
-            mobileNo: {
-              $regex: searchKey,
-              $options: 'i',
-            },
-          },
-          {
-            fname: {
-              $regex: searchKey,
-              $options: 'i',
-            },
-          },
-          {
-            lname: {
-              $regex: searchKey,
-              $options: 'i',
-            },
-          },
-          {
-            email: {
-              $regex: searchKey,
-              $options: 'i',
-            },
-          },
-        ];
-      }
-      let result = await User.find(queryObj)
-        .select('fname lname mobileNo email profileImage patientId gender')
-        .sort({ fname: 1 });
-      UtilController.sendSuccess(req, res, next, {
-        result,
-      });
-    } catch (err) {
-      UtilController.sendError(req, res, next, err);
-    }
-  },
   fileDownloader: async (req, res, next) => {
     try {
       let filesUrl = req.query.file;
