@@ -1,18 +1,18 @@
-let request = require('request');
-let mongoose = require('mongoose');
-var CryptoJS = require('crypto-js');
-const responseCode = require('./../../../config/responseCode').returnCode;
-const User = require('./../../models/User');
-const AwsController = require('./../services/AwsController');
-const awsConfig = require('./../../../config/connection');
+let request = require("request");
+let mongoose = require("mongoose");
+var CryptoJS = require("crypto-js");
+const responseCode = require("./../../../config/responseCode").returnCode;
+const User = require("./../../models/User");
+const AwsController = require("./../services/AwsController");
+const awsConfig = require("./../../../config/connection");
 var link = awsConfig.aws.link;
 module.exports = {
   sendSuccess: async (req, res, next, data) => {
     if (module.exports.isEmpty(data.responseCode)) {
-      data['responseCode'] = responseCode.validSession;
+      data["responseCode"] = responseCode.validSession;
     }
     res.status(200).send({
-      message: 'success',
+      message: "success",
       code: responseCode.success,
       data: data,
     });
@@ -20,7 +20,7 @@ module.exports = {
   sendError: async (req, res, next, err) => {
     console.error(err);
     res.status(500).send({
-      message: 'failure',
+      message: "failure",
       code: responseCode.errror,
       data: err,
     });
@@ -28,10 +28,10 @@ module.exports = {
   isEmpty: (data) => {
     let returnObj = false;
     if (
-      typeof data === 'undefined' ||
+      typeof data === "undefined" ||
       data === null ||
-      data === '' ||
-      data === '' ||
+      data === "" ||
+      data === "" ||
       data.length === 0
     ) {
       returnObj = true;
@@ -67,7 +67,7 @@ module.exports = {
       // Decrypt
       let bytes = CryptoJS.AES.decrypt(passwordHash, secretKey);
       let decryptedPwd = bytes.toString(CryptoJS.enc.Utf8);
-      console.log('decryptedPwd', decryptedPwd);
+      console.log("decryptedPwd", decryptedPwd);
       if (decryptedPwd === userPassword) {
         returnObj = responseCode.passwordMatched;
       }
@@ -79,20 +79,20 @@ module.exports = {
     }
   },
   getOTP: (userObj) => {
-    console.log('getOTP');
+    console.log("getOTP");
     let otpVal = 0;
     try {
-      if (Number(userObj.mobileNo) === 09876543210) {
+      if (Number(userObj.mobileNo) === 9876543210) {
         // later we can do email otp verification also. this case if for the tester account bypass
-        otpVal = '135799';
+        otpVal = "135799";
       } else {
         otpVal = Math.floor(Math.random() * (999999 - 100000)) + 100000;
       }
-      otpVal = '135799'; // this is temparoty solution, once integrate sms gateway, need to remove this one
+      otpVal = "135799"; // this is temparoty solution, once integrate sms gateway, need to remove this one
     } catch (err) {
       console.error(err);
     }
-    console.log('return otp= ' + otpVal);
+    console.log("return otp= " + otpVal);
     return otpVal;
   },
   uploadFiles: async function (req, res, next) {
@@ -106,16 +106,16 @@ module.exports = {
         !(req.files.attachment === undefined)
       ) {
         // to get the bucket name based on input condition, starts Here
-        var bucket = awsConfig.aws.bucket + '/' + req.body.bucketName;
+        var bucket = awsConfig.aws.bucket + "/" + req.body.bucketName;
 
         // ends here
         var attachmentObj = req.files.attachment;
         if (Array.isArray(attachmentObj)) {
           for (var i = 0; i < attachmentObj.length; i++) {
             var attachmentName =
-              Date.now() + '_' + attachmentObj[i].originalname;
+              Date.now() + "_" + attachmentObj[i].originalname;
             attachmentUrlArray.push(
-              link.concat(bucket + '/' + encodeURIComponent(attachmentName))
+              link.concat(bucket + "/" + encodeURIComponent(attachmentName))
             );
             await AwsController.upload2AWS(
               attachmentObj[i].path,
@@ -126,10 +126,10 @@ module.exports = {
           }
         } else {
           var attachmentPath = attachmentObj.path;
-          var attachmentName = Date.now() + '_' + attachmentObj.originalname;
+          var attachmentName = Date.now() + "_" + attachmentObj.originalname;
           //  attachmentUrl = link.concat(bucket + '/' + attachmentName);
           attachmentUrlArray.push(
-            link.concat(bucket + '/' + encodeURIComponent(attachmentName))
+            link.concat(bucket + "/" + encodeURIComponent(attachmentName))
           );
           await AwsController.upload2AWS(
             attachmentPath,
@@ -163,9 +163,9 @@ module.exports = {
         if (Array.isArray(attachmentObj)) {
           for (var i = 0; i < attachmentObj.length; i++) {
             var attachmentName =
-              Date.now() + '_' + attachmentObj[i].originalname;
+              Date.now() + "_" + attachmentObj[i].originalname;
             attachmentUrlArray.push(
-              link.concat(bucket + '/' + encodeURIComponent(attachmentName))
+              link.concat(bucket + "/" + encodeURIComponent(attachmentName))
             );
             await AwsController.upload2AWS(
               attachmentObj[i].path,
@@ -176,10 +176,10 @@ module.exports = {
           }
         } else {
           var attachmentPath = attachmentObj.path;
-          var attachmentName = Date.now() + '_' + attachmentObj.originalname;
+          var attachmentName = Date.now() + "_" + attachmentObj.originalname;
           //  attachmentUrl = link.concat(bucket + '/' + attachmentName);
           attachmentUrlArray.push(
-            link.concat(bucket + '/' + encodeURIComponent(attachmentName))
+            link.concat(bucket + "/" + encodeURIComponent(attachmentName))
           );
           await AwsController.upload2AWS(
             attachmentPath,
@@ -216,9 +216,9 @@ module.exports = {
         if (Array.isArray(attachmentObj)) {
           for (var i = 0; i < attachmentObj.length; i++) {
             var attachmentName =
-              Date.now() + '_' + attachmentObj[i].originalname;
+              Date.now() + "_" + attachmentObj[i].originalname;
             attachmentUrlArray.push(
-              link.concat(bucket + '/' + encodeURIComponent(attachmentName))
+              link.concat(bucket + "/" + encodeURIComponent(attachmentName))
             );
             await AwsController.upload2AWS(
               attachmentObj[i].path,
@@ -229,10 +229,10 @@ module.exports = {
           }
         } else {
           var attachmentPath = attachmentObj.path;
-          var attachmentName = Date.now() + '_' + attachmentObj.originalname;
+          var attachmentName = Date.now() + "_" + attachmentObj.originalname;
           //  attachmentUrl = link.concat(bucket + '/' + attachmentName);
           attachmentUrlArray.push(
-            link.concat(bucket + '/' + encodeURIComponent(attachmentName))
+            link.concat(bucket + "/" + encodeURIComponent(attachmentName))
           );
           await AwsController.upload2AWS(
             attachmentPath,
@@ -253,8 +253,94 @@ module.exports = {
     }
   },
   pad: (num, size) => {
-    var s = num + '';
-    while (s.length < size) s = '0' + s;
+    var s = num + "";
+    while (s.length < size) s = "0" + s;
     return s;
+  },
+
+  getStartAndEndOfMoth: (currentDate) => {
+    // Get the start of the month
+    const startOfMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      1
+    );
+
+    // Get the end of the month
+    const nextMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+      1
+    );
+    const endOfMonth = new Date(nextMonth - 1);
+
+    return {
+      startOfMonth: startOfMonth / 1000,
+      endOfMonth: endOfMonth / 1000,
+    };
+  },
+
+  getStartAndEndOfTheWeek: (currentDate) => {
+    // Calculate the day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+    const dayOfWeek = currentDate.getDay();
+
+    // Calculate the start of the week (Sunday)
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(currentDate.getDate() - dayOfWeek);
+
+    // Calculate the end of the week (Saturday)
+    const endOfWeek = new Date(currentDate);
+    endOfWeek.setDate(currentDate.getDate() + (6 - dayOfWeek));
+
+    return { startOfWeek: startOfWeek / 1000, endOfWeek: endOfWeek / 1000 };
+  },
+
+  getStartAndEndOfDay: (currentDate) => {
+    // Get the start of the day
+    const startOfDay = new Date(currentDate);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    // Get the end of the day
+    const endOfDay = new Date(currentDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return { startOfDay: startOfDay / 1000, endOfDay: endOfDay / 1000 };
+  },
+  getLocation: async (req, res, next) => {
+    var axios = require("axios");
+    var config = {
+      method: "get",
+      maxBodyLength: Infinity,
+      url: `${awsConfig.googleApis.locationsApi}?input=${req.query.place}&key=${awsConfig.googleApis.apiKey}`,
+      headers: {},
+    };
+    try {
+      const data = await axios(config);
+      let result = data?.data;
+      UtilController.sendSuccess(req, res, next, {
+        result,
+      });
+    } catch (err) {
+      UtilController.sendError(req, res, next, err);
+    }
+  },
+
+  getCoordinates: async (req, res, next) => {
+    var axios = require("axios");
+    var config = {
+      method: "GET",
+      maxBodyLength: Infinity,
+      url: `${awsConfig.googleApis.coordinatesApi}?place_id=${req.query.place_id}&key=${awsConfig.googleApis.apiKey}`,
+      headers: {},
+    };
+    try {
+      const data = await axios(config);
+      let result = data?.data;
+      UtilController.sendSuccess(req, res, next, {
+        result,
+      });
+    } catch (err) {
+      UtilController.sendError(req, res, next, err);
+    }
   },
 };

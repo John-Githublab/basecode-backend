@@ -38,6 +38,13 @@ module.exports = {
     replyToEmail: "notification@hoblist.com",
   },
 
+  googleApis: {
+    coordinatesApi: "https://maps.googleapis.com/maps/api/place/details/json",
+    locationsApi:
+      "https://maps.googleapis.com/maps/api/place/queryautocomplete/json",
+    apiKey: "AIzaSyC7x8VBCtgqBYSjD3TPubTFmylJg0SW1VM",
+  },
+
   // razorpay: {
   //   key_id: 'rzp_test_J5vFcCXdPM6fRR',
   //   key_secret: 'lTRTXkOKydp39lrQZHM6HCLl'
