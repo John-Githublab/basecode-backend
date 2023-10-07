@@ -311,17 +311,17 @@ module.exports = {
     var config = {
       method: "get",
       maxBodyLength: Infinity,
-      url: `${awsConfig.googleApis.locationsApi}?input=${req.query.place}&key=${awsConfig.googleApis.apiKey}`,
+      url: `${awsConfig.googleApis.locationsApi}?input=${req.query.keyword}&key=${awsConfig.googleApis.apiKey}`,
       headers: {},
     };
     try {
       const data = await axios(config);
       let result = data?.data;
-      UtilController.sendSuccess(req, res, next, {
+      module.exports.sendSuccess(req, res, next, {
         result,
       });
     } catch (err) {
-      UtilController.sendError(req, res, next, err);
+      module.exports.sendError(req, res, next, err);
     }
   },
 
@@ -336,11 +336,11 @@ module.exports = {
     try {
       const data = await axios(config);
       let result = data?.data;
-      UtilController.sendSuccess(req, res, next, {
+      module.exports.sendSuccess(req, res, next, {
         result,
       });
     } catch (err) {
-      UtilController.sendError(req, res, next, err);
+      module.exports.sendError(req, res, next, err);
     }
   },
 };
