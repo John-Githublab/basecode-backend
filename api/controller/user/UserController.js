@@ -319,7 +319,7 @@ module.exports = {
           },
           { $inc: { sequenceNo: 1 }, updatedAt: Math.floor(Date.now() / 1000) }
         );
-        createObj["userTag"] = tagResult.sequenceNo;
+        createObj["userTag"] = tagResult?.sequenceNo;
         let tagPatientResult = await Tag.findOneAndUpdate(
           {
             active: true,
