@@ -180,7 +180,7 @@ module.exports = {
         ); // 5 minute time
 
         req.session.otpVal = otpVal;
-        if (!(Number(req.body.mobileNo) === 09876543210)) {
+        if (!(Number(req.body.mobileNo) === 9876543210)) {
           NotificationController.userMobileNoOtp({
             mobileNo: userResult.mobileNo,
             otp: otpVal,
@@ -805,7 +805,7 @@ module.exports = {
         });
         userCode = returnCode.validSession;
         req.session.otpVal = otpVal;
-        if (!(Number(req.query.mobileNo) === 09876543210)) {
+        if (!(Number(req.query.mobileNo) === 9876543210)) {
           NotificationController.userMobileNoOtp({
             mobileNo: req.query.mobileNo,
             otp: otpVal,
