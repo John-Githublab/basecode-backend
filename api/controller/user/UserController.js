@@ -332,8 +332,8 @@ module.exports = {
         );
 
         createObj["patientId"] =
-          tagPatientResult.prefix +
-          UtilController.pad(tagPatientResult.sequenceNo, 5);
+          tagPatientResult?.prefix +
+          UtilController.pad(tagPatientResult?.sequenceNo, 5);
         let userResult = await User.create(createObj);
         user = await User.findById(userResult._id)
           .select(
