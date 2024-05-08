@@ -1,14 +1,14 @@
-let request = require('request');
-let mongoose = require('mongoose');
-const returnCode = require('./../../../config/responseCode').returnCode;
-const roleConfig = require('./../../../config/roleConfig');
-const User = require('./../../models/User');
-const Role = require('./../../models/Role');
+let request = require("request");
+let mongoose = require("mongoose");
+const returnCode = require("./../../../config/responseCode").returnCode;
+const roleConfig = require("./../../../config/roleConfig");
+const User = require("./../../../features/auth/model/User");
+const Role = require("./../../models/Role");
 
-const VersionTrack = require('./../../models/VersionTrack');
-const NotificationController = require('./../services/NotificationController');
+const VersionTrack = require("./../../models/VersionTrack");
+const NotificationController = require("./../services/NotificationController");
 
-const UtilController = require('./../services/UtilController');
+const UtilController = require("./../services/UtilController");
 module.exports = {
   queryRole: async (req, res, next) => {
     try {
@@ -19,27 +19,27 @@ module.exports = {
       };
 
       if (!UtilController.isEmpty(searchKey)) {
-        queryObj['$or'] = [
+        queryObj["$or"] = [
           {
             name: {
               $regex: searchKey,
-              $options: 'i',
+              $options: "i",
             },
           },
         ];
       }
 
       let sortOrder = {};
-      if (req.body.sortOrder !== '' && req.body.sortField !== '') {
-        sortOrder[req.body.sortField] = req.body.sortOrder === 'false' ? -1 : 1;
+      if (req.body.sortOrder !== "" && req.body.sortField !== "") {
+        sortOrder[req.body.sortField] = req.body.sortOrder === "false" ? -1 : 1;
       } else {
         sortOrder = {
           updatedAt: -1,
         };
       }
       let planResult = await Role.find(queryObj)
-        .populate('owner', 'fname userTag email profileImage')
-        .populate('createdBy', 'fname userTag email userType profileImage')
+        .populate("owner", "fname userTag email profileImage")
+        .populate("createdBy", "fname userTag email userType profileImage")
         .sort(sortOrder)
         .skip(req.body.page * req.body.pageSize)
         .limit(req.body.pageSize);
@@ -56,7 +56,7 @@ module.exports = {
 
   queryTitle: async (req, res, next) => {
     try {
-      let roles = await Role.find({ active: true }).select('name');
+      let roles = await Role.find({ active: true }).select("name");
 
       UtilController.sendSuccess(req, res, next, {
         roles,
@@ -71,7 +71,7 @@ module.exports = {
       let roleId = req.body.roleId;
 
       // let roleId = "5ef0cb15e815c50d8c93244f";
-      let role = await Role.findById(roleId).select('-permission').lean();
+      let role = await Role.findById(roleId).select("-permission").lean();
       let permissionArray = [];
       let roleAggregate = await Role.aggregate([
         {
@@ -81,14 +81,14 @@ module.exports = {
         },
         {
           $unwind: {
-            path: '$permission',
+            path: "$permission",
           },
         },
         {
           $group: {
-            _id: '$permission.parentId',
+            _id: "$permission.parentId",
             access: {
-              $push: '$permission',
+              $push: "$permission",
             },
           },
         },
@@ -115,15 +115,15 @@ module.exports = {
                 );
 
                 if (level2Index > -1) {
-                  level2Permission['child'] = roleAggregate[level2Index].access;
+                  level2Permission["child"] = roleAggregate[level2Index].access;
                 } else {
-                  level2Permission['child'] = [];
+                  level2Permission["child"] = [];
                 }
                 level2Array.push(level2Permission);
               }
-              parentPermission['child'] = level2Array;
+              parentPermission["child"] = level2Array;
             } else {
-              parentPermission['child'] = []; // keep empty array
+              parentPermission["child"] = []; // keep empty array
             }
             permissionArray.push(parentPermission);
           }
@@ -155,7 +155,7 @@ module.exports = {
         active: true,
         owner: mongoose.Types.ObjectId(req.session.userId),
       };
-      let activeRole = await Role.find(queryObj, 'name');
+      let activeRole = await Role.find(queryObj, "name");
 
       UtilController.sendSuccess(req, res, next, {
         activeRole,
@@ -216,10 +216,10 @@ module.exports = {
   },
   getUnassigned: async (req, res, next) => {
     try {
-      console.log('assigned');
+      console.log("assigned");
       let employees = await User.find({
         active: true,
-        userType: 'admin',
+        userType: "admin",
       });
       let admins = [];
       let userResult = await User.find({
@@ -256,7 +256,7 @@ module.exports = {
           active: false,
           updatedAt: Math.floor(Date.now() / 1000),
         }
-      ).select('-id');
+      ).select("-id");
       console.log(req.body);
 
       await VersionTrack.create({

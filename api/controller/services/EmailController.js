@@ -1,30 +1,30 @@
-let request = require('request');
-var fs = require('fs');
-var path = require('path');
-let mongoose = require('mongoose');
-const connection = require('./../../../config/connection');
-const AWS = require('aws-sdk');
+let request = require("request");
+var fs = require("fs");
+var path = require("path");
+let mongoose = require("mongoose");
+const connection = require("../../../config/connection");
+const AWS = require("aws-sdk");
 
-const nodemailer = require('nodemailer'); // sending email from smtp connection
+const nodemailer = require("nodemailer"); // sending email from smtp connection
 
 AWS.config.update({
   secretAccessKey: connection.aws.secretAccessKey,
   accessKeyId: connection.aws.accessKeyId,
-  region: 'ap-south-1',
+  region: "ap-south-1",
 });
 module.exports = {
   sendEmail: async function (data) {
-    console.log('Email req');
+    console.log("Email req");
     // Create sendEmail params
     var params = {
       Destination: {
         /* required */
         CcAddresses: [
-          'mallikarjuna@geeksynergy.com',
+          "mallikarjuna@geeksynergy.com",
           /* more items */
         ],
         ToAddresses: [
-          'mallikarjuna023@gmail.com',
+          "mallikarjuna023@gmail.com",
           /* more items */
         ],
       },
@@ -33,7 +33,7 @@ module.exports = {
         Body: {
           /* required */
           Html: {
-            Charset: 'UTF-8',
+            Charset: "UTF-8",
             Data: data,
           },
           // Text: {
@@ -42,21 +42,21 @@ module.exports = {
           // }
         },
         Subject: {
-          Charset: 'UTF-8',
-          Data: 'AWS Test emai',
+          Charset: "UTF-8",
+          Data: "AWS Test emai",
         },
       },
-      Source: 'Hoblist<notification@hoblist.com>',
+      Source: "Hoblist<notification@hoblist.com>",
       /* required */
       ReplyToAddresses: [
-        'notification@hoblist.com',
+        "notification@hoblist.com",
         /* more items */
       ],
     };
 
     // Create the promise and SES service object
     var sendPromise = new AWS.SES({
-      apiVersion: '2010-12-01',
+      apiVersion: "2010-12-01",
     })
       .sendEmail(params)
       .promise();
@@ -64,7 +64,7 @@ module.exports = {
     // Handle promise's fulfilled/rejected states
     sendPromise
       .then(function (data) {
-        console.log('email send response: ');
+        console.log("email send response: ");
         console.log(data);
         res.send(JSON.stringify(data));
       })
@@ -74,13 +74,13 @@ module.exports = {
   },
   sendUserMail: async function (template, emailData) {
     try {
-      fs.readFile(template, 'utf8', function (err, data) {
+      fs.readFile(template, "utf8", function (err, data) {
         if (err) {
           console.error(err);
           console.log(err);
         } else {
           for (keys in emailData.data) {
-            let tempRep = new RegExp('<%' + keys + '%>', 'g');
+            let tempRep = new RegExp("<%" + keys + "%>", "g");
             data = data.replace(tempRep, emailData.data[keys]);
           }
           var params = {
@@ -90,31 +90,31 @@ module.exports = {
             Message: {
               Body: {
                 Html: {
-                  Charset: 'UTF-8',
+                  Charset: "UTF-8",
                   Data: data,
                 },
               },
               Subject: {
-                Charset: 'UTF-8',
+                Charset: "UTF-8",
                 Data: emailData.emailSubject,
               },
             },
             //Source: 'Hoblist<notification@hoblist.com>',
-            Source: 'Pimarq<noreply@pimarq.com>',
+            Source: "Pimarq<noreply@pimarq.com>",
             ReplyToAddresses: [
-              'enquiry@pimarq.com',
+              "enquiry@pimarq.com",
               //'notification@hoblist.com',
             ],
           };
 
           var sendPromise = new AWS.SES({
-            apiVersion: '2010-12-01',
+            apiVersion: "2010-12-01",
           })
             .sendEmail(params)
             .promise();
           sendPromise
             .then(function (data) {
-              console.log('email send response: ' + emailData.toAddresses);
+              console.log("email send response: " + emailData.toAddresses);
             })
             .catch(function (err) {
               console.error(err, err.stack);
@@ -128,7 +128,7 @@ module.exports = {
   sendUserCustomMail: async function (data, emailData) {
     try {
       for (keys in emailData.data) {
-        let tempRep = new RegExp('<%' + keys + '%>', 'g');
+        let tempRep = new RegExp("<%" + keys + "%>", "g");
         data = data.replace(tempRep, emailData.data[keys]);
       }
       var params = {
@@ -138,27 +138,27 @@ module.exports = {
         Message: {
           Body: {
             Html: {
-              Charset: 'UTF-8',
+              Charset: "UTF-8",
               Data: data,
             },
           },
           Subject: {
-            Charset: 'UTF-8',
+            Charset: "UTF-8",
             Data: emailData.emailSubject,
           },
         },
-        Source: 'Pimarq<noreply@pimarq.com>',
-        ReplyToAddresses: ['enquiry@pimarq.com'],
+        Source: "Pimarq<noreply@pimarq.com>",
+        ReplyToAddresses: ["enquiry@pimarq.com"],
       };
 
       var sendPromise = new AWS.SES({
-        apiVersion: '2010-12-01',
+        apiVersion: "2010-12-01",
       })
         .sendEmail(params)
         .promise();
       sendPromise
         .then(function (data) {
-          console.log('email send response: ' + emailData.toAddresses);
+          console.log("email send response: " + emailData.toAddresses);
         })
         .catch(function (err) {
           console.error(err, err.stack);
@@ -172,15 +172,15 @@ module.exports = {
     try {
       // let areaResult = await Area.findById(emailData.areaId).select('emailGateway');
       let gateway = connection;
-      if (!(typeof gateway === 'undefined' || gateway === null)) {
+      if (!(typeof gateway === "undefined" || gateway === null)) {
         switch (gateway.emailGateway.provider) {
-          case 'aws':
+          case "aws":
             module.exports.sendEmailByAWS(gateway.emailGateway, emailData);
             break;
-          case 'smtp':
+          case "smtp":
             module.exports.sendEmailBySMTP(gateway.emailGateway, emailData);
             break;
-          case 'sendgrid':
+          case "sendgrid":
             module.exports.sendEmailBySendGrid(gateway.emailGateway, emailData);
             break;
           default:
@@ -212,7 +212,7 @@ module.exports = {
         html: emailData.content, // html body
       });
       console.log(
-        'smtp email message sent to : %s ' + emailData.toAddresses,
+        "smtp email message sent to : %s " + emailData.toAddresses,
         info.messageId
       );
     } catch (err) {
@@ -233,12 +233,12 @@ module.exports = {
         Message: {
           Body: {
             Html: {
-              Charset: 'UTF-8',
+              Charset: "UTF-8",
               Data: emailData.content,
             },
           },
           Subject: {
-            Charset: 'UTF-8',
+            Charset: "UTF-8",
             Data: emailData.subject,
           },
         },
@@ -246,13 +246,13 @@ module.exports = {
         ReplyToAddresses: [credentials.replyToEmail],
       };
       var sendPromise = new AWS.SES({
-        apiVersion: '2010-12-01',
+        apiVersion: "2010-12-01",
       })
         .sendEmail(params)
         .promise();
       sendPromise
         .then(function (data) {
-          console.log('email send response: ' + emailData.toAddresses);
+          console.log("email send response: " + emailData.toAddresses);
         })
         .catch(function (err) {
           console.error(err, err.stack);

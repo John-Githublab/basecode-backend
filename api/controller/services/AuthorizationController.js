@@ -1,17 +1,17 @@
 let request = require("request");
 let mongoose = require("mongoose");
 const Option = require("../../models/Option");
-const User = require("../../models/User");
+const User = require("../../../features/auth/model/User");
 const Notification = require("../../models/Notification");
-const authorization = require("./../../../config/authorization");
-const connection = require("./../../../config/connection");
-const UtilController = require("./../services/UtilController");
+const authorization = require("../../../config/authorization");
+const connection = require("../../../config/connection");
+const UtilController = require("./UtilController");
 
-//var request = require('request');
 const adminAuthList = [];
 const usersAuthList = [];
 const indexAuthList = [];
 const languageList = [];
+
 for (var i = 0; i < authorization.admin.authNotRequire.length; i++) {
   adminAuthList.push("/admin" + authorization.admin.authNotRequire[i]);
 }
@@ -40,9 +40,6 @@ module.exports = {
       // set the language if request requires it
       if (languageList.indexOf(req.path) > -1) {
       }
-      // adding aws credentials in request to get it in browser side. no need to add in each router
-      //res.locals.awsCognito = connection.aws.CognitoIdentityCredentials;
-      // check here, authorization is there or not
 
       if (
         req.path.startsWith("/admin") &&

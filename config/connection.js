@@ -11,13 +11,13 @@ module.exports = {
       IdentityPoolId: "ap-south-1:649af36f-e5a4-4138-8b30-1b2c67a5b4e6",
       region: "ap-south-1",
     },
-    accessKeyId: "AKIA44Q7KKCMVUKGEWWP", // hoblist access key "AKIA5G4WQMXF5XDOYGWA", // pimaer access key"AKIAVZSKAPZUM3BMM6FZ",
-    secretAccessKey: "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", //"fKTsBmQnXs5EO3FEnp0a93Wus8tqnMv7xa8xyVmj", //"aCHVX7DWauWyGxLoLPAPy7v5XjuCiv96FhKB5USl",
+    accessKeyId: "AKIA44Q7KKCMVUKGEWWP",
+    secretAccessKey: "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",
     smtpAccessKeyId: "AKIAVZSKAPZUMDOIUWQR",
     smtpSecretAccessKey: "BITjpfyduWf5AKisdIXJTsKVkvZ++f9lRLM5IfBwwqQD",
-    region: "ap-south-1", //ap-south-1  us-east-2
+    region: "ap-south-1",
     bucket: "myanclinic",
-    link: "https://s3.ap-south-1.amazonaws.com/",
+    link: "",
   },
   smsGateway: {
     provider: "gupshup",
@@ -45,10 +45,9 @@ module.exports = {
     apiKey: "AIzaSyC7x8VBCtgqBYSjD3TPubTFmylJg0SW1VM",
   },
 
-  // razorpay: {
-  //   key_id: 'rzp_test_J5vFcCXdPM6fRR',
-  //   key_secret: 'lTRTXkOKydp39lrQZHM6HCLl'
-  // },
+  razorpay: {
+    key_id: "",
+    key_secret: "",
+  },
   hostName: "http://localhost:3000",
-  // hostName: 'http://myanclinic.com/app',
 };

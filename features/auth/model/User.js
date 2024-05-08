@@ -10,10 +10,6 @@ let userSchema = mongoose.Schema(
       type: String,
       default: '',
     },
-    // userTag: {
-    //   type: String,
-    //   default: '',
-    // }, // this is unique key which defines user details.and use for login
     email: {
       type: String,
       default: '',

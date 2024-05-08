@@ -1,32 +1,32 @@
 var io = null;
-const User = require('../../models/User');
+const User = require("../../../features/auth/model/User");
 
 module.exports = {
-  initSocket: async function(ioObj) {
+  initSocket: async function (ioObj) {
     try {
-      console.log('initSocket function');
+      console.log("initSocket function");
       io = ioObj;
 
-      io.on('connection', function(socket) {
-        socket.on('updateSocketId', function(userId) {
-          console.log('on updateSocketId');
+      io.on("connection", function (socket) {
+        socket.on("updateSocketId", function (userId) {
+          console.log("on updateSocketId");
           module.exports.updateUserSocketId(userId, socket.id);
         });
 
-        socket.on('new_client', function(username) {
+        socket.on("new_client", function (username) {
           //username = ent.encode(username);
-          console.log('new connection');
+          console.log("new connection");
           console.log(username);
           console.log(socket.id);
           //socket.username = username;
           //socket.broadcast.emit('new_client', username);
         });
 
-        socket.on('message', function(message) {
+        socket.on("message", function (message) {
           //message = ent.encode(message);
           //socket.broadcast.emit('message', {username: socket.username, message: message});
           //io.to(`${socketId}`).emit('hey', 'I just met you');
-          console.log(' current socket id');
+          console.log(" current socket id");
           console.log(socket.id);
           // socket.to(socket.id).emit('message', {
           //   username: socket.username,
@@ -34,44 +34,40 @@ module.exports = {
           // });
         });
       });
-
-
     } catch (err) {
       console.error(err);
     }
-
   },
-  updateUserSocketId: async function(userId, socketId) {
-
+  updateUserSocketId: async function (userId, socketId) {
     console.log(socketId);
     try {
       var result = await User.findByIdAndUpdate(userId, {
-        socketId: socketId
+        socketId: socketId,
       });
-      io.to(socketId).emit('updateSocketId', {
-        status: 'success',
+      io.to(socketId).emit("updateSocketId", {
+        status: "success",
         code: 1,
-        message: 'User Socket IO is updated sucessfully'
+        message: "User Socket IO is updated sucessfully",
       });
     } catch (err) {
       console.error(err);
-      io.to(socketId).emit('updateSocketId', {
-        status: 'failure',
+      io.to(socketId).emit("updateSocketId", {
+        status: "failure",
         code: 6,
-        message: 'User Socket IO is not updated sucessfully'
+        message: "User Socket IO is not updated sucessfully",
       });
     }
   },
   //use this method to notify the particular user regarding changes in live data. so user will be in synchronous
-  sendInfo2User: async function(senderId, clientMessageType, dataObj) {
-    console.log('sendInfo2User');
+  sendInfo2User: async function (senderId, clientMessageType, dataObj) {
+    console.log("sendInfo2User");
     try {
       //  socket.to(senderId).emit(clientMessageType, dataObj);
       io.to(senderId).emit(clientMessageType, dataObj);
       console.log(senderId);
-      console.log('sendInfo2User done');
+      console.log("sendInfo2User done");
     } catch (err) {
       console.error(err);
     }
-  }
-}
+  },
+};

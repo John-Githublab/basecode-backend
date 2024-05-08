@@ -1,14 +1,14 @@
-var request = require('request');
-var fs = require('fs');
-var path = require('path');
-var http = require('http');
-var https = require('https');
-var Stream = require('stream').Transform;
+var request = require("request");
+var fs = require("fs");
+var path = require("path");
+var http = require("http");
+var https = require("https");
+var Stream = require("stream").Transform;
 // const User = require('./../../model/User');
-const UtilController = require('./../services/UtilController');
+const UtilController = require("./UtilController");
 
-const awsConfig = require('./../../../config/connection');
-const AWS = require('aws-sdk');
+const awsConfig = require("../../../config/connection");
+const AWS = require("aws-sdk");
 AWS.config.update({
   secretAccessKey: awsConfig.aws.secretAccessKey,
   accessKeyId: awsConfig.aws.accessKeyId,
@@ -30,11 +30,11 @@ module.exports = {
           console.log(err);
         } else {
           params = {
-            ACL: 'public-read', // public-read / authenticated-read
+            ACL: "public-read", // public-read / authenticated-read
             Bucket: bucket,
             Key: fileName,
             Body: data,
-            CacheControl: 'max-age=31536000',
+            CacheControl: "max-age=31536000",
             ContentType: contentType,
           };
           s3.putObject(params, function (err, data) {
@@ -57,7 +57,7 @@ module.exports = {
     try {
       var s3 = new AWS.S3();
       params = {
-        ACL: 'public-read', // public-read / authenticated-read
+        ACL: "public-read", // public-read / authenticated-read
         Bucket: bucket,
         Key: fileName,
         Body: dataFile,
@@ -65,7 +65,7 @@ module.exports = {
         //   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       };
 
-      let attachmentUrl = link + bucket + '/' + fileName;
+      let attachmentUrl = link + bucket + "/" + fileName;
       const data = await s3
         .putObject(params, function (err, data) {
           if (err) {
@@ -90,11 +90,11 @@ module.exports = {
         if (err) console.error(err);
         else {
           params = {
-            ACL: 'authenticated-read', // public-read
+            ACL: "authenticated-read", // public-read
             Bucket: bucket,
             Key: fileName,
             Body: data,
-            CacheControl: 'max-age=31536000',
+            CacheControl: "max-age=31536000",
           };
           s3.putObject(params, function (err, data) {
             if (err) {
@@ -121,28 +121,28 @@ module.exports = {
         // to get the bucket name based on input condition, starts Here
         var bucket;
         switch (req.body.upload) {
-          case 'attachment':
+          case "attachment":
             bucket = awsConfig.attachmentsBucket;
             break;
-          case 'invoice':
+          case "invoice":
             bucket = awsConfig.invoicesBucket;
             break;
-          case 'photo':
+          case "photo":
             bucket = awsConfig.photosBucket;
             break;
-          case 'prescription':
+          case "prescription":
             bucket = awsConfig.prescriptionBucket;
             break;
           default:
-            bucket = '';
+            bucket = "";
         }
         // ends here
         var attachmentObj = req.files.attachment;
         if (Array.isArray(attachmentObj)) {
           for (var i = 0; i < attachmentObj.length; i++) {
             var attachmentName =
-              Date.now() + '_' + attachmentObj[i].originalname;
-            attachmentUrlArray.push(link.concat(bucket + '/' + attachmentName));
+              Date.now() + "_" + attachmentObj[i].originalname;
+            attachmentUrlArray.push(link.concat(bucket + "/" + attachmentName));
             module.exports.upload2AWS(
               attachmentObj[i].path,
               bucket,
@@ -152,9 +152,9 @@ module.exports = {
           }
         } else {
           var attachmentPath = attachmentObj.path;
-          var attachmentName = Date.now() + '_' + attachmentObj.originalname;
+          var attachmentName = Date.now() + "_" + attachmentObj.originalname;
           //  attachmentUrl = link.concat(bucket + '/' + attachmentName);
-          attachmentUrlArray.push(link.concat(bucket + '/' + attachmentName));
+          attachmentUrlArray.push(link.concat(bucket + "/" + attachmentName));
           module.exports.upload2AWS(
             attachmentPath,
             bucket,
@@ -176,29 +176,29 @@ module.exports = {
     try {
       var bucket;
       switch (attachmentObj.upload) {
-        case 'movies':
-          bucket = 'hoblist/movies/poster';
+        case "movies":
+          bucket = "hoblist/movies/poster";
           break;
-        case 'books':
-          bucket = 'hoblist/books/poster';
+        case "books":
+          bucket = "hoblist/books/poster";
           break;
-        case 'shows':
-          bucket = 'hoblist/shows/poster';
+        case "shows":
+          bucket = "hoblist/shows/poster";
           break;
-        case 'genre':
-          bucket = 'hoblist/genre';
+        case "genre":
+          bucket = "hoblist/genre";
           break;
-        case 'verification':
+        case "verification":
           bucket = awsConfig.verificationBucket;
           break;
         default:
-          bucket = '';
+          bucket = "";
       }
 
       var attachmentPath = attachmentObj.path;
-      var attachmentName = Date.now() + '_' + attachmentObj.originalname;
+      var attachmentName = Date.now() + "_" + attachmentObj.originalname;
       //var attachmentName = attachmentObj.originalname;
-      var attachmentUrl = link.concat(bucket + '/' + attachmentName);
+      var attachmentUrl = link.concat(bucket + "/" + attachmentName);
       //attachmentUrlArray.push(link.concat(bucket + '/' + attachmentName));
       module.exports.uploadMigratedFile2AWS(
         attachmentPath,
@@ -219,18 +219,18 @@ module.exports = {
       https
         .request(url, function (response) {
           var data = new Stream();
-          response.on('data', function (chunk) {
+          response.on("data", function (chunk) {
             data.push(chunk);
           });
-          response.on('end', function () {
+          response.on("end", function () {
             //fs.writeFileSync('image.png', data.read());
             //var body = new Buffer(data.read(), 'base64');
             params = {
-              ACL: 'public-read', // public-read  //authenticated-read
+              ACL: "public-read", // public-read  //authenticated-read
               Bucket: bucket,
               Key: fileName,
               Body: data.read(),
-              CacheControl: 'max-age=31536000',
+              CacheControl: "max-age=31536000",
             };
             s3.putObject(params, function (err, data) {
               if (err) {
@@ -247,16 +247,16 @@ module.exports = {
   },
 
   listAllKeys: async function (token, cb) {
-    console.log('listAllKeys is calling');
-    console.log('allKeys');
+    console.log("listAllKeys is calling");
+    console.log("allKeys");
     console.log(allKeys.length);
     var s3 = new AWS.S3();
 
     var opts = {
-      Bucket: 'hoblist',
-      Delimiter: '/',
+      Bucket: "hoblist",
+      Delimiter: "/",
       //Prefix: folder + '/'
-      Prefix: 'movies/poster/',
+      Prefix: "movies/poster/",
     };
     if (token) opts.ContinuationToken = token;
 
@@ -269,14 +269,14 @@ module.exports = {
     });
   },
   cb: async function () {
-    console.log('cb function');
+    console.log("cb function");
     console.log(allKeys.length);
     console.log(allKeys);
     module.exports.checkAndDeleteS3Image(allKeys);
   },
   getFolderImages: async function (req, res, bucket, folder, page, options) {
     try {
-      module.exports.listAllKeys(null, 'cb');
+      module.exports.listAllKeys(null, "cb");
       // var s3 = new AWS.S3();
       // var params = {
       //   Bucket: 'hoblist',
@@ -337,9 +337,9 @@ module.exports = {
   deleteImageFromS3: async function (imageUrl) {
     try {
       var s3 = new AWS.S3();
-      let imageKey = imageUrl.substr(imageUrl.lastIndexOf('/') + 1);
+      let imageKey = imageUrl.substr(imageUrl.lastIndexOf("/") + 1);
       var deleteParams = {
-        Bucket: 'hoblist/posts',
+        Bucket: "hoblist/posts",
         Key: imageKey,
       };
       s3.deleteObject(deleteParams, function (err, data) {

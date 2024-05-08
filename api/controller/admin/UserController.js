@@ -1,18 +1,18 @@
-let request = require('request');
-let mongoose = require('mongoose');
-var CryptoJS = require('crypto-js');
-const User = require('./../../models/User');
-const DataFileUpload = require('./../../models/DataFileUpload');
-const Tag = require('./../../models/Tag');
+let request = require("request");
+let mongoose = require("mongoose");
+var CryptoJS = require("crypto-js");
+const User = require("../../../features/auth/model/User");
+const DataFileUpload = require("./../../models/DataFileUpload");
+const Tag = require("./../../models/Tag");
 
-const configuration = require('./../../../config/configuration');
+const configuration = require("./../../../config/configuration");
 
-const NotificationController = require('./../services/NotificationController');
-const UtilController = require('./../services/UtilController');
-const returnCode = require('./../../../config/responseCode').returnCode;
+const NotificationController = require("./../services/NotificationController");
+const UtilController = require("./../services/UtilController");
+const returnCode = require("./../../../config/responseCode").returnCode;
 
-var passwordSecretKey = 'Vaxi@2O$1'; // (pimarq)this is standerd key to generate password
-const NodeCache = require('node-cache');
+var passwordSecretKey = "Vaxi@2O$1"; // (pimarq)this is standerd key to generate password
+const NodeCache = require("node-cache");
 
 const systemCache = new NodeCache({
   stdTTL: 3600,
@@ -23,7 +23,7 @@ module.exports = {
   accountLoginStatus: async function (req, res, next) {
     try {
       let responseCode = returnCode.invalidSession;
-      let userType = '';
+      let userType = "";
       let user, receiverId;
       let notificationCount = 0;
 
@@ -37,14 +37,10 @@ module.exports = {
         }
         user = await User.findById(req.session.userId)
           .select(
-            'fname lname email mobileNo userName profileImage userType permission deliveryAddress gender dob'
+            "fname lname email mobileNo userName profileImage userType permission deliveryAddress gender dob"
           )
-          .populate('permission')
+          .populate("permission")
           .lean();
-        //         notificationCount = await Notification.countDocuments({
-        //   receiverId,
-        //   read: false
-        // });
       }
       UtilController.sendSuccess(req, res, next, {
         responseCode,
@@ -58,7 +54,7 @@ module.exports = {
   accountLogin: async function (req, res, next) {
     try {
       let userCode = returnCode.validEmail;
-      let userType = 'user';
+      let userType = "user";
       let emailId = req.body.email;
       let userName = req.body.email;
       let password = req.body.password;
@@ -71,11 +67,11 @@ module.exports = {
           userName,
           active: true,
         }).select(
-          'fname active mobileNo email userTag passwordAttempt emailVerified '
+          "fname active mobileNo email userTag passwordAttempt emailVerified "
         );
-        console.log('emailCheck', emailCheck);
+        console.log("emailCheck", emailCheck);
         userCode = UtilController.checkEmailStatus(emailCheck);
-        console.log('userCode', userCode + '     ' + returnCode.validEmail);
+        console.log("userCode", userCode + "     " + returnCode.validEmail);
         req.session.userCode = userCode;
         if (userCode === returnCode.validEmail) {
           req.session.username = userName;
@@ -97,22 +93,22 @@ module.exports = {
           let emailObj = await User.findOne({
             userName: req.session.username,
           }).select(
-            'fname active email mobileNo userTag  password passwordAttempt emailVerified userType areaId isSuperAdmin'
+            "fname active email mobileNo userTag  password passwordAttempt emailVerified userType areaId isSuperAdmin"
           );
 
-          console.log('emailObj', emailObj);
+          console.log("emailObj", emailObj);
 
           userCode = UtilController.comparePassword(
             emailObj.password,
             password,
             passwordSecretKey
           );
-          console.log(' comparePassword' + userCode);
+          console.log(" comparePassword" + userCode);
           if (userCode === returnCode.passwordMatched) {
             // check for two factor authorization
-            if (configuration.login['2FactorAuthentication']) {
-              userCode = returnCode['2FactorEnabled'];
-              console.log('sessionId', req.sessionID);
+            if (configuration.login["2FactorAuthentication"]) {
+              userCode = returnCode["2FactorEnabled"];
+              console.log("sessionId", req.sessionID);
               systemCache.set(
                 req.sessionID,
                 emailObj._id,
@@ -131,7 +127,7 @@ module.exports = {
                 {
                   lastLogin: Math.floor(Date.now() / 1000),
                 }
-              ).select('areaId userType');
+              ).select("areaId userType");
             }
           } else {
             await User.findOneAndUpdate(
@@ -162,11 +158,11 @@ module.exports = {
       if (Number(req.body.otpVal) === Number(req.session.otpVal)) {
         response = returnCode.validSession;
         let userSes = systemCache.get(req.sessionID);
-        if (!(typeof userSes === 'undefined' || userSes === null)) {
+        if (!(typeof userSes === "undefined" || userSes === null)) {
           req.session.userId = userSes;
           let userResult = await User.findByIdAndUpdate(userSes, {
             lastLogin: Math.floor(Date.now() / 1000),
-          }).select('areaId userType isSuperAdmin');
+          }).select("areaId userType isSuperAdmin");
 
           req.session.isSuperAdmin = userResult.isSuperAdmin;
           //req.session.areaId=userResult.areaId;
@@ -192,31 +188,31 @@ module.exports = {
         active: req.body.active,
         userType: req.body.userType,
       };
-      if (req.body.userType === 'all') {
+      if (req.body.userType === "all") {
         delete queryObj.userType;
       }
 
-      console.log('querytest', queryObj);
+      console.log("querytest", queryObj);
 
-      console.log('search1', searchKey);
+      console.log("search1", searchKey);
       if (!UtilController.isEmpty(searchKey)) {
-        queryObj['$or'] = [
+        queryObj["$or"] = [
           {
             fname: {
               $regex: searchKey,
-              $options: 'i',
+              $options: "i",
             },
           },
           {
             lname: {
               $regex: searchKey,
-              $options: 'i',
+              $options: "i",
             },
           },
           {
             mobileNo: {
               $regex: searchKey,
-              $options: 'i',
+              $options: "i",
             },
           },
           // {
@@ -228,22 +224,22 @@ module.exports = {
           {
             patientId: {
               $regex: searchKey,
-              $options: 'i',
+              $options: "i",
             },
           },
         ];
       }
 
       let sortOrder = {};
-      if (req.body.sortOrder !== '' && req.body.sortField !== '') {
-        sortOrder[req.body.sortField] = req.body.sortOrder === 'false' ? -1 : 1;
+      if (req.body.sortOrder !== "" && req.body.sortField !== "") {
+        sortOrder[req.body.sortField] = req.body.sortOrder === "false" ? -1 : 1;
       } else {
         sortOrder = {
           updatedAt: -1,
         };
       }
 
-      console.log('query', queryObj);
+      console.log("query", queryObj);
       let result = await User.find(queryObj)
 
         .sort(sortOrder)
@@ -264,29 +260,29 @@ module.exports = {
     try {
       let createObj = req.body;
 
-      createObj['emailVerified'] = true;
+      createObj["emailVerified"] = true;
       let userResult = await User.find({
         userName: req.body.mobileNo,
         userType: req.body.userType,
       });
 
-      console.log('userResult', userResult);
+      console.log("userResult", userResult);
 
       if (userResult.length === 0) {
-        createObj['userName'] = req.body.mobileNo;
+        createObj["userName"] = req.body.mobileNo;
 
-        createObj['createdAt'] = Math.floor(Date.now() / 1000);
+        createObj["createdAt"] = Math.floor(Date.now() / 1000);
 
-        if (createObj.userType === 'admin') {
+        if (createObj.userType === "admin") {
           // let userPassword = Math.random().toString(36).slice(-8);
-          let userPassword = 'geeksAdmin';
+          let userPassword = "geeksAdmin";
 
-          createObj['operatedBy'] = req.session.userId;
+          createObj["operatedBy"] = req.session.userId;
           var ciphertext = CryptoJS.AES.encrypt(
             userPassword,
             passwordSecretKey
           );
-          createObj['password'] = ciphertext.toString();
+          createObj["password"] = ciphertext.toString();
           NotificationController.userCredentials({
             email: createObj.email,
             data: {
@@ -298,7 +294,7 @@ module.exports = {
           });
         }
 
-        console.log('createObj', createObj);
+        console.log("createObj", createObj);
         await User.create(createObj);
         UtilController.sendSuccess(req, res, next, {});
       } else {
@@ -307,7 +303,7 @@ module.exports = {
         });
       }
     } catch (err) {
-      console.log('1');
+      console.log("1");
 
       UtilController.sendError(req, res, next, err);
     }
@@ -355,12 +351,12 @@ module.exports = {
   getAdminByMobile: async (req, res, next) => {
     try {
       let bufferObj = req.query.ui;
-      console.log('bufferCode', bufferObj);
+      console.log("bufferCode", bufferObj);
 
-      let buf = new Buffer(bufferObj, 'base64');
+      let buf = new Buffer(bufferObj, "base64");
 
-      let decodedContent = buf.toString('ascii');
-      console.log('decode', decodedContent);
+      let decodedContent = buf.toString("ascii");
+      console.log("decode", decodedContent);
 
       let user = await User.findOne({ userTag: decodedContent });
       console.log(req.sessionId);
@@ -373,16 +369,16 @@ module.exports = {
         user._id,
         configuration.login.otpValidation
       ); // 5 minute time
-      console.log('cacge', systemCache);
+      console.log("cacge", systemCache);
       req.session.otpVal = otpVal;
-      console.log('otp', otpVal, req.session.otpVal);
+      console.log("otp", otpVal, req.session.otpVal);
       NotificationController.userMobileNoOtp({
         mobileNo: user.mobileNo,
         otp: otpVal,
         data: {
           otp: otpVal,
         },
-        content: 'your otp is this',
+        content: "your otp is this",
       });
 
       UtilController.sendSuccess(req, res, next, {
@@ -410,12 +406,12 @@ module.exports = {
   verifyOtpNewAdmin: async (req, res, next) => {
     try {
       let response = returnCode.invalidToken;
-      console.log('req', req.body.otpVal, req.session.otpVal);
+      console.log("req", req.body.otpVal, req.session.otpVal);
 
       if (Number(req.body.otpVal) === Number(req.session.otpVal)) {
         response = returnCode.validSession;
         let userSes = systemCache.get(req.sessionID);
-        if (!(typeof userSes === 'undefined' || userSes === null)) {
+        if (!(typeof userSes === "undefined" || userSes === null)) {
           req.session.userId = userSes;
 
           //req.session.areaId=userResult.areaId;
@@ -435,11 +431,11 @@ module.exports = {
 
   resendOtp: async (req, res, next) => {
     try {
-      console.log('reaching');
+      console.log("reaching");
       let userSes = systemCache.get(req.sessionID);
-      if (!(typeof userSes === 'undefined' || userSes === null)) {
+      if (!(typeof userSes === "undefined" || userSes === null)) {
         let userObj = await User.findById(userSes).select(
-          'name active email mobileNo userTag emailVerified'
+          "name active email mobileNo userTag emailVerified"
         );
         await module.exports.sendOtp(req, userObj);
       } else {
@@ -477,7 +473,7 @@ module.exports = {
         req.session.destroy();
       }
       UtilController.sendSuccess(req, res, next, {
-        message: 'user account is logout successfully',
+        message: "user account is logout successfully",
       });
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -494,18 +490,18 @@ module.exports = {
       updateObj.familyHistory = updateObj.familyHistory.toString();
       updateObj.surgeries = updateObj.surgeries.toString();
 
-      updateObj['userName'] = req.body.mobileNo;
+      updateObj["userName"] = req.body.mobileNo;
 
-      updateObj['updatedAt'] = Math.floor(Date.now() / 1000);
+      updateObj["updatedAt"] = Math.floor(Date.now() / 1000);
 
       if (
         req.body.password !== undefined &&
         req.body.password !== null &&
-        req.body.password !== ''
+        req.body.password !== ""
       ) {
         let userPassword = req.body.password;
         var ciphertext = CryptoJS.AES.encrypt(userPassword, passwordSecretKey);
-        updateObj['password'] = ciphertext.toString();
+        updateObj["password"] = ciphertext.toString();
       } else {
         delete updateObj.password;
       }
@@ -515,7 +511,7 @@ module.exports = {
           // operatedBy: mongoose.Types.ObjectId(req.session.userId),
         },
         updateObj
-      ).select('-id');
+      ).select("-id");
       UtilController.sendSuccess(req, res, next, {});
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -532,7 +528,7 @@ module.exports = {
       );
       let encriptedNewPassword = encriptedNewPsw.toString();
       let userEmailObj = await User.findById(req.session.userId).select(
-        'name active email password'
+        "name active email password"
       );
       userCode = UtilController.comparePassword(
         userEmailObj.password,
@@ -548,7 +544,7 @@ module.exports = {
 
       UtilController.sendSuccess(req, res, next, {
         responseCode: userCode,
-        message: 'User password reset is done successfully',
+        message: "User password reset is done successfully",
       });
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -570,7 +566,7 @@ module.exports = {
         },
       });
       UtilController.sendSuccess(req, res, next, {
-        message: 'User is deleted successfully',
+        message: "User is deleted successfully",
       });
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -585,7 +581,7 @@ module.exports = {
 
   resetPasswordAttempt: async (req, res, next) => {
     try {
-      console.log('resetPasswordAttempt');
+      console.log("resetPasswordAttempt");
       await User.findByIdAndUpdate(req.body.userId, {
         passwordAttempt: 0,
         updatedAt: Math.floor(Date.now() / 1000),
@@ -599,7 +595,7 @@ module.exports = {
         },
       });
       UtilController.sendSuccess(req, res, next, {
-        message: 'User passwordAttempt reset is done successfully',
+        message: "User passwordAttempt reset is done successfully",
       });
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -614,19 +610,19 @@ module.exports = {
         active: true,
         //email: emailId
       }).select(
-        'fname active email userName fname userTag mobileNo passwordAttempt emailVerified '
+        "fname active email userName fname userTag mobileNo passwordAttempt emailVerified "
       );
       let newPassword = Math.random().toString(36).slice(-8);
       let emailAccount = {
         email: emailCheck.email,
-        receiverName: '',
+        receiverName: "",
         userName: emailCheck.userName,
       };
 
       userCode = UtilController.checkEmailStatus(emailCheck);
       if (userCode === returnCode.validEmail) {
         // send password in email
-        emailAccount['receiverName'] = emailCheck.fname;
+        emailAccount["receiverName"] = emailCheck.fname;
         NotificationController.forgotPassword({
           //userId: req.session.userId,
           //emailId,
@@ -640,7 +636,7 @@ module.exports = {
       systemCache.set(newPassword, emailAccount, 1200); // 20 minute time
       UtilController.sendSuccess(req, res, next, {
         responseCode: userCode,
-        message: 'User forgot password request is sent over the email',
+        message: "User forgot password request is sent over the email",
       });
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -658,7 +654,7 @@ module.exports = {
       );
       let encriptedNewPassword = encriptedNewPsw.toString();
       let response = returnCode.invalidToken;
-      if (!(typeof emailObj === 'undefined' || emailObj === null)) {
+      if (!(typeof emailObj === "undefined" || emailObj === null)) {
         await User.findOneAndUpdate(
           {
             userName: emailObj.userName,
@@ -693,7 +689,7 @@ module.exports = {
           email: userEmails[i],
           active: true,
           subscribe: true,
-        }).select('name email');
+        }).select("name email");
         if (cntVal !== undefined && cntVal.length > 0) {
           NotificationController.userCustomEmail({
             userId: cntVal[0]._id,
@@ -717,7 +713,7 @@ module.exports = {
         responseCode = returnCode.noDuplicate;
       }
       UtilController.sendSuccess(req, res, next, {
-        message: 'User account plan is upgrated successfully',
+        message: "User account plan is upgrated successfully",
         responseCode,
       });
     } catch (err) {
@@ -733,8 +729,8 @@ module.exports = {
       if (userCnt === 0) {
         responseCode = returnCode.noDuplicate;
         let updateObj = req.body;
-        updateObj['active'] = true;
-        updateObj['$push'] = {
+        updateObj["active"] = true;
+        updateObj["$push"] = {
           logs: {
             userId: req.session.userId,
             data: {
@@ -743,23 +739,23 @@ module.exports = {
           },
         };
         let newPassword = Math.random().toString(36).slice(-8);
-        console.log('newPassword');
+        console.log("newPassword");
         console.log(newPassword);
         var ciphertext = CryptoJS.AES.encrypt(newPassword, passwordSecretKey);
-        updateObj['password'] = ciphertext.toString();
+        updateObj["password"] = ciphertext.toString();
         await User.findByIdAndUpdate(req.body.userId, updateObj);
         // send user login credentials
         NotificationController.userCredentials({
           userId: req.body.userId,
           userName: updateObj.userName,
           password: newPassword,
-          receiverName: '',
-          userType: 'user',
+          receiverName: "",
+          userType: "user",
         });
       }
       UtilController.sendSuccess(req, res, next, {
         responseCode,
-        message: 'User account is activated successfully',
+        message: "User account is activated successfully",
       });
     } catch (err) {
       UtilController.sendError(req, res, next, err);
@@ -767,7 +763,7 @@ module.exports = {
   },
   listUploadedFiles: async (req, res, next) => {
     try {
-      console.log('listUploadedFiles');
+      console.log("listUploadedFiles");
       let { menuName, operationType } = req.body;
       let queryObj = {
         active: true,
@@ -789,19 +785,19 @@ module.exports = {
     try {
       let filesUrl = req.query.file;
       let fileType =
-        '.' +
-        filesUrl.substring(filesUrl.lastIndexOf('.') + 1, filesUrl.length);
+        "." +
+        filesUrl.substring(filesUrl.lastIndexOf(".") + 1, filesUrl.length);
 
-      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader("Content-Type", "application/octet-stream");
       res.setHeader(
-        'Content-Disposition',
-        'attachment; filename=' + req.query.fileName + fileType
+        "Content-Disposition",
+        "attachment; filename=" + req.query.fileName + fileType
 
         // filesUrl.split('/').pop()
       );
       await request
         .get(filesUrl)
-        .on('error', function (err) {
+        .on("error", function (err) {
           console.log(err);
         })
         .pipe(res);

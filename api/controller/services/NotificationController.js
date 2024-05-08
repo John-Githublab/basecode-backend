@@ -1,16 +1,16 @@
 // this is controller is created to handle all user notification related request,
 // this controller will decide what ara all methods used to send notification like email, sms etc
-var request = require('request');
-let mongoose = require('mongoose');
-const connection = require('./../../../config/connection');
-const EmailController = require('./EmailController');
-const SmsController = require('./SmsController');
-const UserSocketController = require('./UserSocketController');
-const User = require('./../../models/User');
-const Notification = require('./../../models/Notification');
-const NotificationTemplate = require('./../../models/NotificationTemplate');
-const UtilController = require('./../services/UtilController');
-const FcmController = require('./../services/FcmController');
+var request = require("request");
+let mongoose = require("mongoose");
+const connection = require("../../../config/connection");
+const EmailController = require("./EmailController");
+const SmsController = require("./SmsController");
+const UserSocketController = require("./UserSocketController");
+const User = require("../../../features/auth/model/User");
+const Notification = require("../../models/Notification");
+const NotificationTemplate = require("../../models/NotificationTemplate");
+const UtilController = require("./UtilController");
+const FcmController = require("./FcmController");
 
 let hostName = connection.hostName;
 module.exports = {
@@ -19,7 +19,7 @@ module.exports = {
 
     try {
       for (keys in notification.data) {
-        let tempRep = new RegExp('<%' + keys + '%>', 'g');
+        let tempRep = new RegExp("<%" + keys + "%>", "g");
 
         data = data.replace(tempRep, notification.data[keys]);
       }
@@ -29,8 +29,8 @@ module.exports = {
     return data;
   },
   replaceTemplateDynamicVariable: async (notification) => {
-    let data = '';
-    let templateSubject = '';
+    let data = "";
+    let templateSubject = "";
     try {
       let template = await NotificationTemplate.findOne({
         title: notification.title,
@@ -42,20 +42,20 @@ module.exports = {
 
       if (!UtilController.isEmpty(template)) {
         data = template.content;
-        if (notification.notificationType === 'email') {
+        if (notification.notificationType === "email") {
           // Create a buffer from the string
-          let bufferObj = Buffer.from(template.content, 'base64');
+          let bufferObj = Buffer.from(template.content, "base64");
           // Encode the Buffer as a utf8 string
-          let decodedContent = bufferObj.toString('utf8');
+          let decodedContent = bufferObj.toString("utf8");
           data = decodedContent;
           templateSubject = template.subject;
         }
         let keys,
-          values = '';
+          values = "";
         let tempRep;
         for (let i = 0; i < template.dynamicVariable.length; i++) {
           keys = template.dynamicVariable[i].label;
-          tempRep = new RegExp('<%' + keys + '%>', 'g');
+          tempRep = new RegExp("<%" + keys + "%>", "g");
 
           values = notification.data[keys];
 
@@ -84,8 +84,8 @@ module.exports = {
   },
   userMobileNoOtp: async (notification) => {
     try {
-      notification['title'] = 'loginOTP';
-      notification['notificationType'] = 'sms';
+      notification["title"] = "loginOTP";
+      notification["notificationType"] = "sms";
       let notifyTemplate = {};
       notifyTemplate = await module.exports.replaceTemplateDynamicVariable(
         notification
@@ -102,8 +102,8 @@ module.exports = {
 
   sendUserOtp: async (notification) => {
     try {
-      notification['title'] = 'loginOTP';
-      notification['notificationType'] = 'sms';
+      notification["title"] = "loginOTP";
+      notification["notificationType"] = "sms";
       let notifyTemplate = {};
       notifyTemplate = await module.exports.replaceTemplateDynamicVariable(
         notification
@@ -113,12 +113,12 @@ module.exports = {
         message: notifyTemplate.content,
         //  areaId:notification.areaId
       });
-      notification['notificationType'] = 'email';
+      notification["notificationType"] = "email";
       notifyTemplate = await module.exports.replaceTemplateDynamicVariable(
         notification
       );
 
-      notifyTemplate['toAddresses'] = notification.email;
+      notifyTemplate["toAddresses"] = notification.email;
 
       EmailController.sendCustomMail(notifyTemplate);
     } catch (err) {
@@ -131,7 +131,7 @@ module.exports = {
       let notifyTemplate = {};
       if (UtilController.isEmpty(notification.templateId)) {
         notifyTemplate.content = await module.exports.replaceDynamicVariable(
-          Buffer.from(notification.body, 'base64').toString('utf8'),
+          Buffer.from(notification.body, "base64").toString("utf8"),
           notification
         );
         notifyTemplate.subject = notification.title;
@@ -140,12 +140,12 @@ module.exports = {
           notification
         );
       }
-      notification['body'] = notifyTemplate.content;
+      notification["body"] = notifyTemplate.content;
 
-      if (notification.actionTo === 'caregiver') {
+      if (notification.actionTo === "caregiver") {
         let userCaregiverResult = await User.findById(
           notification.data._id
-        ).populate('caregiver', 'mobileNo email fcmToken');
+        ).populate("caregiver", "mobileNo email fcmToken");
         for (let k = 0; k < userCaregiverResult.caregiver.length; k++) {
           notification.mobileNo = userCaregiverResult.caregiver[k].mobileNo;
           notification.fcmId = userCaregiverResult.caregiver[k].fcmToken;
@@ -158,7 +158,7 @@ module.exports = {
 
       for (let i = 0; i < notification.visibleOn.length; i++) {
         switch (notification.visibleOn[i]) {
-          case 'sms':
+          case "sms":
             if (!UtilController.isEmpty(notification.mobileNo)) {
               SmsController.sendCustomerSMS({
                 mobileNo: notification.mobileNo,
@@ -166,13 +166,13 @@ module.exports = {
               });
             }
             break;
-          case 'email':
+          case "email":
             if (!UtilController.isEmpty(notification.email)) {
-              notifyTemplate['toAddresses'] = notification.email;
+              notifyTemplate["toAddresses"] = notification.email;
               EmailController.sendCustomMail(notifyTemplate);
             }
             break;
-          case 'app':
+          case "app":
             if (!UtilController.isEmpty(notification.fcmId)) {
               FcmController.sendFcmNotification(
                 notification.fcmId,
@@ -181,7 +181,7 @@ module.exports = {
             }
             break;
 
-          case 'whatsApp':
+          case "whatsApp":
             //Implementation is later version
             break;
 
@@ -190,19 +190,19 @@ module.exports = {
         }
       }
 
-      if (notification.actionTo === 'both') {
+      if (notification.actionTo === "both") {
         let userResult = await User.findById(notification.data._id).populate(
-          'caregiver',
-          'mobileNo email fcmToken'
+          "caregiver",
+          "mobileNo email fcmToken"
         );
 
         for (let t = 0; t < userResult.caregiver.length; t++) {
           notification.templateId = notification.templateId;
-          notification.actionTo = '';
+          notification.actionTo = "";
 
           if (UtilController.isEmpty(notification.templateId)) {
-            notification.body = Buffer.from(notification.body, 'utf8').toString(
-              'base64'
+            notification.body = Buffer.from(notification.body, "utf8").toString(
+              "base64"
             );
           }
 
@@ -221,8 +221,8 @@ module.exports = {
 
   sendDeliveryOtp: async (notification) => {
     try {
-      notification['title'] = 'deliveryOTP';
-      notification['notificationType'] = 'sms';
+      notification["title"] = "deliveryOTP";
+      notification["notificationType"] = "sms";
       let notifyTemplate = {};
       notifyTemplate = await module.exports.replaceTemplateDynamicVariable(
         notification
@@ -247,14 +247,14 @@ module.exports = {
   userRegistration: async function (notification) {
     let emailObj = {
       data: {
-        unsubscribe: hostName + '/user/unsubscribe/' + notification.emailId,
+        unsubscribe: hostName + "/user/unsubscribe/" + notification.emailId,
       },
       toAddresses: notification.emailId,
       //receiverName: notification.receiverName,
-      emailSubject: 'Welcome to the world of Policies',
+      emailSubject: "Welcome to the world of Policies",
     };
     EmailController.sendUserMail(
-      './templates/email/registration.html',
+      "./templates/email/registration.html",
       emailObj
     );
   },
@@ -262,32 +262,32 @@ module.exports = {
     let token = Math.random().toString(36).slice(-10);
     let emailObj = {
       data: {
-        unsubscribe: hostName + '/user/unsubscribe/' + notification.emailId,
+        unsubscribe: hostName + "/user/unsubscribe/" + notification.emailId,
         //confirmation: hostName + "/user/email/confirmation?email=" + notification.emailId + "&category=" + notification.userType + "&token=" + token,
         confirmation:
           hostName +
-          '/#/email/confirmation/' +
+          "/#/email/confirmation/" +
           notification.emailId +
-          '/' +
+          "/" +
           notification.userType +
-          '/' +
+          "/" +
           token,
         toAddresses: notification.emailId,
         receiverName: notification.receiverName,
       },
       toAddresses: notification.emailId,
       receiverName: notification.receiverName,
-      emailSubject: 'Confirm The Policy Table Account',
+      emailSubject: "Confirm The Policy Table Account",
     };
     EmailController.sendUserMail(
-      './templates/email/confirmation.html',
+      "./templates/email/confirmation.html",
       emailObj
     );
   },
   notifyUserRegistration: async function (notification) {
     let emailObj = {
       data: {
-        unsubscribe: hostName + '/user/unsubscribe/' + notification.emailId,
+        unsubscribe: hostName + "/user/unsubscribe/" + notification.emailId,
         name: notification.name,
         email: notification.email,
         mobileNo: notification.mobileNo,
@@ -297,10 +297,10 @@ module.exports = {
       },
       toAddresses: notification.emailId,
       //receiverName: notification.receiverName,
-      emailSubject: notification.name + ' is registed on The Policy Table',
+      emailSubject: notification.name + " is registed on The Policy Table",
     };
     EmailController.sendUserMail(
-      './templates/email/notifyUserRegistrationToPimarq.html',
+      "./templates/email/notifyUserRegistrationToPimarq.html",
       emailObj
     );
   },
@@ -325,21 +325,21 @@ module.exports = {
     //   emailObj
     // );
     // Read the email template from database
-    notification['data'] = {
+    notification["data"] = {
       receiverName: notification.receiverName,
       password: notification.password,
-      unsubscribe: hostName + '/admin/unsubscribe/' + notification.emailId,
+      unsubscribe: hostName + "/admin/unsubscribe/" + notification.emailId,
       toAddresses: notification.emailId,
       resetLink:
-        hostName + '/#/user/password/generate?token=' + notification.password,
+        hostName + "/#/user/password/generate?token=" + notification.password,
     };
-    notification['title'] = 'resetPassword';
-    notification['notificationType'] = 'email';
+    notification["title"] = "resetPassword";
+    notification["notificationType"] = "email";
     notifyTemplate = await module.exports.replaceTemplateDynamicVariable(
       notification
     );
 
-    notifyTemplate['toAddresses'] = notification.emailId;
+    notifyTemplate["toAddresses"] = notification.emailId;
     EmailController.sendCustomMail(notifyTemplate);
   },
   newRegistration: async function (notification) {
@@ -363,21 +363,21 @@ module.exports = {
     //   emailObj
     // );
     // Read the email template from database
-    notification['data'] = {
+    notification["data"] = {
       receiverName: notification.receiverName,
       confirmation:
-        hostName + '/#/register/admin?ui=' + notification.confirmation,
-      unsubscribe: hostName + '/admin/unsubscribe/' + notification.emailId,
+        hostName + "/#/register/admin?ui=" + notification.confirmation,
+      unsubscribe: hostName + "/admin/unsubscribe/" + notification.emailId,
       toAddresses: notification.emailId,
-      resetLink: hostName + '/#/registration/admin?ui=' + notification.password,
+      resetLink: hostName + "/#/registration/admin?ui=" + notification.password,
     };
-    notification['title'] = 'newRegistration';
-    notification['notificationType'] = 'email';
+    notification["title"] = "newRegistration";
+    notification["notificationType"] = "email";
     notifyTemplate = await module.exports.replaceTemplateDynamicVariable(
       notification
     );
 
-    notifyTemplate['toAddresses'] = notification.emailId;
+    notifyTemplate["toAddresses"] = notification.emailId;
     EmailController.sendCustomMail(notifyTemplate);
   },
 
@@ -399,32 +399,32 @@ module.exports = {
     //   emailObj
     // );
 
-    notification['data'] = {
+    notification["data"] = {
       receiverName: notification.receiverName,
       password: notification.password,
-      unsubscribe: hostName + '/admin/unsubscribe/' + notification.emailId,
+      unsubscribe: hostName + "/admin/unsubscribe/" + notification.emailId,
       toAddresses: notification.emailId,
     };
-    notification['title'] = 'newPassword';
-    notification['notificationType'] = 'email';
+    notification["title"] = "newPassword";
+    notification["notificationType"] = "email";
     notifyTemplate = await module.exports.replaceTemplateDynamicVariable(
       notification
     );
 
-    notifyTemplate['toAddresses'] = notification.emailId;
+    notifyTemplate["toAddresses"] = notification.emailId;
 
     EmailController.sendCustomMail(notifyTemplate);
   },
   userCredentials: async (notification) => {
     try {
-      console.log('notification', notification);
-      notification['title'] = 'userCredentials';
-      notification['notificationType'] = 'email';
+      console.log("notification", notification);
+      notification["title"] = "userCredentials";
+      notification["notificationType"] = "email";
       let notifyTemplate = await module.exports.replaceTemplateDynamicVariable(
         notification
       );
       //notifyTemplate['areaId']=notification.areaId;
-      notifyTemplate['toAddresses'] = notification.email;
+      notifyTemplate["toAddresses"] = notification.email;
       EmailController.sendCustomMail(notifyTemplate);
       // let userResult = await User.findById(notification.userId);
       // let emailObj = {
@@ -470,24 +470,24 @@ module.exports = {
     }
   },
   getformatedDate: function (unix_timestamp) {
-    if (unix_timestamp == '' || unix_timestamp == undefined) {
-      return '-';
+    if (unix_timestamp == "" || unix_timestamp == undefined) {
+      return "-";
     }
     var a = new Date(unix_timestamp * 1000);
     //var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     var months = [
-      '01',
-      '02',
-      '03',
-      '04',
-      '05',
-      '06',
-      '07',
-      '08',
-      '09',
-      '10',
-      '11',
-      '12',
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08",
+      "09",
+      "10",
+      "11",
+      "12",
     ];
     var year = a.getFullYear();
     var month = months[a.getMonth()];
@@ -498,15 +498,15 @@ module.exports = {
     //var time = pad(date, 2) + '-' +  pad(month, 2) + '-' + year + ' ' + pad(hour, 2) + ':' + pad(min, 2) + ':' + pad(sec, 2);
     var time =
       module.exports.pad(date, 2) +
-      '-' +
+      "-" +
       module.exports.pad(month, 2) +
-      '-' +
+      "-" +
       year;
     return time;
   },
   pad: function (num, size) {
-    var s = num + '';
-    while (s.length < size) s = '0' + s;
+    var s = num + "";
+    while (s.length < size) s = "0" + s;
     return s;
   },
 };

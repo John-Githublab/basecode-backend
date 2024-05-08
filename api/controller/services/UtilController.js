@@ -1,11 +1,15 @@
 let request = require("request");
 let mongoose = require("mongoose");
 var CryptoJS = require("crypto-js");
-const responseCode = require("./../../../config/responseCode").returnCode;
-const User = require("./../../models/User");
-const AwsController = require("./../services/AwsController");
-const awsConfig = require("./../../../config/connection");
+const responseCode = require("../../../config/responseCode").returnCode;
+const User = require("../../../features/auth/model/User");
+const AwsController = require("./AwsController");
+const awsConfig = require("../../../config/connection");
 var link = awsConfig.aws.link;
+const PrettyConsole = require("../../../utils/PrettyConsole");
+
+const prettyConsole = new PrettyConsole();
+
 module.exports = {
   sendSuccess: async (req, res, next, data) => {
     if (module.exports.isEmpty(data.responseCode)) {
@@ -18,11 +22,18 @@ module.exports = {
     });
   },
   sendError: async (req, res, next, err) => {
-    console.error(err);
+    prettyConsole.error(
+      "Error message: " +
+        err?.message +
+        ".   " +
+        err.stack.split("\n")[1] +
+        " " +
+        err.stack.split("\n")[2]
+    );
+    const message = err?.message || "failure Occured";
     res.status(500).send({
-      message: "failure",
-      code: responseCode.errror,
-      data: err,
+      message,
+      code: responseCode.error,
     });
   },
   isEmpty: (data) => {
@@ -31,12 +42,14 @@ module.exports = {
       typeof data === "undefined" ||
       data === null ||
       data === "" ||
-      data === "" ||
       data.length === 0
     ) {
       returnObj = true;
     }
     return returnObj;
+  },
+  throwError: (errorMessage) => {
+    throw new Error(errorMessage);
   },
   checkEmailStatus: (userObj) => {
     let userCode = responseCode.accountSuspended; // user account is suspended/ deactivated, needs to check with admin team
@@ -79,7 +92,6 @@ module.exports = {
     }
   },
   getOTP: (userObj) => {
-    console.log("getOTP");
     let otpVal = 0;
     try {
       if (Number(userObj.mobileNo) === 9876543210) {
